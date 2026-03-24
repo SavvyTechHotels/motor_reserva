@@ -1,0 +1,158 @@
+{
+  "name": "Hotel · Disponibilidad de Slots",
+  "nodes": [
+    {
+      "id": "wh_disp",
+      "name": "GET /disponibilidad",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "disponibilidad",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code_slots",
+      "name": "Generar Slots",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "// Parámetros del query string (GET request)\nconst query = $json.query || {};\nconst servicio = (query.servicio || '').toLowerCase();\nconst fecha = query.fecha;\n\n// Validación\nif (!servicio || !fecha) {\n  return [{ json: { ok: false, error: 'Parámetros servicio y fecha son requeridos', valid: false } }];\n}\nif (!['spa', 'restaurante'].includes(servicio)) {\n  return [{ json: { ok: false, error: 'Servicio debe ser spa o restaurante', valid: false } }];\n}\n\n// Configuración por servicio\nconst config = {\n  spa:         { intervalo: 60, aforo: 4,  inicio: [10, 0], fin: [20, 0] },\n  restaurante: { intervalo: 30, aforo: 20, inicio: [12, 0], fin: [23, 0] }\n};\n\nconst { intervalo, aforo, inicio, fin } = config[servicio];\n\n// Generar todos los slots del día\nconst slots = [];\nlet mins = inicio[0] * 60 + inicio[1];\nconst finMins = fin[0] * 60 + fin[1];\n\nwhile (mins < finMins) {\n  const h = Math.floor(mins / 60);\n  const m = mins % 60;\n  slots.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));\n  mins += intervalo;\n}\n\nreturn [{ json: { servicio, fecha, slots, aforo, valid: true } }];"
+      }
+    },
+    {
+      "id": "if_valid_disp",
+      "name": "Params Válidos",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [680, 300],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "at_search_disp",
+      "name": "Consultar Reservas",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [900, 180],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_TABLE_RESERVAS_ID"
+        },
+        "filterByFormula": "={{ \"AND({servicio}='\" + $('Generar Slots').item.json.servicio + \"',{fecha}='\" + $('Generar Slots').item.json.fecha + \"',{estado}='confirmada')\" }}"
+      }
+    },
+    {
+      "id": "code_filter",
+      "name": "Filtrar Disponibles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 180],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Recibir todas las reservas existentes para esta fecha/servicio\nconst reservas = $input.all();\n\n// Recuperar los parámetros generados en el nodo anterior\nconst params = $('Generar Slots').first().json;\nconst { slots, aforo, servicio, fecha } = params;\n\n// Calcular ocupación por slot (suma de personas)\nconst ocupacion = {};\nfor (const r of reservas) {\n  const hora = r.json.hora;\n  const pax = parseInt(r.json.personas, 10) || 1;\n  if (hora) {\n    ocupacion[hora] = (ocupacion[hora] || 0) + pax;\n  }\n}\n\n// Devolver solo los slots con aforo disponible\nconst disponibles = slots.filter(s => (ocupacion[s] || 0) < aforo);\n\nreturn [{ json: { ok: true, data: disponibles, servicio, fecha } }];"
+      }
+    },
+    {
+      "id": "resp_ok_disp",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1340, 180],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "resp_err_disp",
+      "name": "Responder Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [900, 440],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: $json.error }) }}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "GET /disponibilidad": {
+      "main": [
+        [{ "node": "Generar Slots", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generar Slots": {
+      "main": [
+        [{ "node": "Params Válidos", "type": "main", "index": 0 }]
+      ]
+    },
+    "Params Válidos": {
+      "main": [
+        [{ "node": "Consultar Reservas", "type": "main", "index": 0 }],
+        [{ "node": "Responder Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Consultar Reservas": {
+      "main": [
+        [{ "node": "Filtrar Disponibles", "type": "main", "index": 0 }]
+      ]
+    },
+    "Filtrar Disponibles": {
+      "main": [
+        [{ "node": "Responder OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "_meta": {
+    "notes": [
+      "CONFIGURACIÓN REQUERIDA:",
+      "1. En nodo 'Consultar Reservas': reemplazar YOUR_AIRTABLE_BASE_ID y YOUR_TABLE_RESERVAS_ID con tus IDs de Airtable",
+      "2. Configura las credenciales de Airtable en n8n (Settings > Credentials)",
+      "3. La tabla 'Reservas' en Airtable debe tener los campos: nombre, email, servicio, fecha, hora, personas, confirmacion_id, estado",
+      "LÓGICA DE NEGOCIO:",
+      "- Spa: slots cada 60 min, 10:00-20:00, aforo máx 4 personas",
+      "- Restaurante: slots cada 30 min, 12:00-23:00, aforo máx 20 personas",
+      "- Solo se devuelven slots donde aforo_actual < aforo_máximo"
+    ]
+  }
+}

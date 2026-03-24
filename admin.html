@@ -649,6 +649,7 @@
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn-secondary" id="previewBtn" onclick="openPreview()" target="_blank">👁 Vista previa</button>
       <button class="btn-primary" onclick="closeModal('embedModal')">Cerrar</button>
     </div>
   </div>
@@ -844,15 +845,22 @@ function renderEstTable() {
   `).join('');
 }
 
+let _currentEmbedId = null;
+
 function showEmbedCode(id, nombre) {
-  const { url: sbUrl } = getCfg();
-  // Use n8n webhook base — user can update if needed
+  _currentEmbedId = id;
   const widgetUrl = window.location.origin + window.location.pathname.replace('admin.html', 'widget-reservas.js');
   const code = `<!-- Widget de reservas: ${nombre} -->
 <div id="hotel-reservas"></div>
 <script src="${widgetUrl}?id=${id}"><\/script>`;
   document.getElementById('embedCode').textContent = code;
   openModal('embedModal');
+}
+
+function openPreview() {
+  if (!_currentEmbedId) return;
+  const previewUrl = window.location.origin + window.location.pathname.replace('admin.html', 'preview.html') + '?id=' + _currentEmbedId;
+  window.open(previewUrl, '_blank');
 }
 
 function copyEmbed() {
