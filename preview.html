@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview — Widget de Reservas</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
       min-height: 100vh;
       display: flex;
@@ -13,6 +15,14 @@
       background: #f6f3f1;
       padding: 24px;
       font-family: system-ui, sans-serif;
+    }
+    #hotel-reservas {
+      width: 100%;
+    }
+    /* En móvil: sin padding, widget a pantalla completa */
+    @media (max-width: 500px) {
+      body { padding: 0; background: #fff; align-items: flex-start; }
+      #hotel-reservas { border-radius: 0 !important; box-shadow: none !important; }
     }
     #no-id {
       text-align: center;

@@ -350,6 +350,19 @@
       opacity: .6;
       letter-spacing: .3px;
     }
+
+    /* ── Responsive ── */
+    @media (max-width: 500px) {
+      .hr-widget {
+        max-width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        min-height: 100vh;
+      }
+      .hr-header { padding: 20px 20px 16px; }
+      .hr-body { padding: 20px 20px 24px; }
+      .hr-slots-grid { grid-template-columns: repeat(3, 1fr); }
+    }
   `;
 
   /* ─── Estado ─────────────────────────────────────────────────────── */

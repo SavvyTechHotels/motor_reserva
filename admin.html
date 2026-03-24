@@ -859,8 +859,7 @@ function showEmbedCode(id, nombre) {
 
 function openPreview() {
   if (!_currentEmbedId) return;
-  const previewUrl = window.location.origin + window.location.pathname.replace('admin.html', 'preview.html') + '?id=' + _currentEmbedId;
-  window.open(previewUrl, '_blank');
+  window.open('preview.html?id=' + _currentEmbedId, '_blank');
 }
 
 function copyEmbed() {
