@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Motor de Reservas</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #f6f3f1;
+      --surface: #ffffff;
+      --border: #e4ddd6;
+      --primary: #0e4159;
+      --accent: #0e4159;
+      --danger: #c0392b;
+      --success: #27ae60;
+      --text: #1a2e3b;
+      --text-muted: #7a8fa0;
+      --radius: 10px;
+      --shadow: 0 2px 16px rgba(14,65,89,.08);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 56px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(14,65,89,.2);
+    }
+    header h1 { font-size: 15px; font-weight: 600; flex: 1; letter-spacing: -.1px; }
+    header span { font-size: 12px; opacity: .5; }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: calc(100vh - 56px); }
+
+    /* ── Sidebar ── */
+    nav.sidebar {
+      width: 200px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      flex-shrink: 0;
+    }
+    nav.sidebar button {
+      width: 100%;
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .15s;
+    }
+    nav.sidebar button:hover { background: var(--bg); color: var(--text); }
+    nav.sidebar button.active {
+      background: #f5ede4;
+      color: var(--accent);
+      font-weight: 600;
+      border-left: 3px solid var(--accent);
+    }
+    .sidebar-sep { height: 1px; background: var(--border); margin: 12px 0; }
+
+    /* ── Settings flyout ── */
+    .settings-bar {
+      display: none;
+      background: #fff7f0;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 28px;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .settings-bar.open { display: flex; }
+    .settings-bar label { font-size: 12px; color: var(--text-muted); }
+    .settings-bar input {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      width: 340px;
+    }
+    .settings-bar button { font-size: 12px; }
+
+    /* ── Main ── */
+    main { flex: 1; padding: 28px; max-width: 1100px; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 15px; font-weight: 600; }
+
+    /* ── Buttons ── */
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: opacity .15s, transform .1s;
+    }
+    button:active, .btn:active { transform: scale(.97); }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-secondary { background: var(--bg); border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #e8e3db; }
+    .btn-danger { background: #fde8e7; color: var(--danger); }
+    .btn-danger:hover { background: #fad2d0; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon { padding: 6px; border-radius: 6px; background: none; border: 1px solid var(--border); }
+    .btn-icon:hover { background: var(--bg); }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 12px; color: var(--text-muted); font-weight: 500; border-bottom: 2px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf8f5; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green { background: #d4f5e1; color: #1a7a40; }
+    .badge-gray  { background: #ececec; color: #666; }
+    .badge-blue  { background: #dbeafe; color: #1d4ed8; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+
+    /* ── Forms ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-full { grid-column: 1 / -1; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+      background: #fff;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    /* Horario week grid */
+    .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .day-block {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .day-block .day-name {
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .day-block input[type=time] {
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 5px;
+      font-size: 11px;
+      width: 100%;
+    }
+    .day-block input[type=time]:disabled { background: #f5f5f5; }
+    .day-block label.closed { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; justify-content: center; }
+
+    /* color swatch */
+    .color-row { display: flex; align-items: center; gap: 8px; }
+    .color-row input[type=color] { width: 36px; height: 36px; border: none; border-radius: 6px; cursor: pointer; padding: 0; }
+    .color-row input[type=text] { flex: 1; }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      width: 100%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h2 { font-size: 16px; }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .close-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); padding: 4px; }
+
+    /* ── Embed code modal ── */
+    .embed-box {
+      background: #1a1a2e;
+      color: #a8dadc;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      word-break: break-all;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(255,255,255,.15);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.25); }
+
+    /* ── Calendar ── */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .cal-header h3 { flex: 1; text-align: center; font-size: 15px; }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .cal-day-name {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 6px 0;
+      text-transform: uppercase;
+    }
+    .cal-cell {
+      aspect-ratio: 1;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      gap: 3px;
+      transition: background .15s;
+      position: relative;
+    }
+    .cal-cell:hover { background: #f5ede4; border-color: var(--accent); }
+    .cal-cell.empty { border-color: transparent; cursor: default; background: none; }
+    .cal-cell.has-override { background: #fff3e0; border-color: #f0a050; }
+    .cal-cell.has-override:hover { background: #ffe8c0; }
+    .cal-cell.past { opacity: .4; pointer-events: none; }
+    .cal-cell .day-num { font-weight: 600; }
+    .cal-cell .override-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    /* ── Slots list ── */
+    .slots-container {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      min-height: 80px;
+    }
+    .slot-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      margin-bottom: 8px;
+    }
+    .slot-item .slot-time { font-weight: 600; min-width: 60px; }
+    .slot-item .slot-aforo { flex: 1; color: var(--text-muted); }
+
+    /* ── Bookings ── */
+    .booking-filters {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    /* ── Empty states ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 13px; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      z-index: 999;
+      max-width: 320px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.error { background: var(--danger); }
+
+    /* ── Misc ── */
+    .text-muted { color: var(--text-muted); }
+    .mt-12 { margin-top: 12px; }
+    .mt-20 { margin-top: 20px; }
+    .flex { display: flex; gap: 8px; align-items: center; }
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    .section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+
+    @media (max-width: 700px) {
+      nav.sidebar { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .week-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Settings bar -->
+<div class="settings-bar" id="settingsBar">
+  <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
+    <label>Supabase URL</label>
+    <input id="cfgUrl" type="text" placeholder="https://xxxx.supabase.co" style="width:260px">
+  </div>
+  <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
+    <label>Service Role Key</label>
+    <input id="cfgKey" type="password" placeholder="eyJ..." style="width:280px">
+  </div>
+  <button class="btn-primary" onclick="saveSettings()">Guardar</button>
+  <small class="text-muted">La clave se guarda en localStorage del navegador</small>
+</div>
+
+<header>
+  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><rect width="26" height="26" rx="6" fill="rgba(255,255,255,.15)"/><text x="13" y="18" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="11" fill="white">ST</text></svg>
+  <h1>SavvyTech — Panel Admin</h1>
+  <span id="cfgStatus">Sin configurar</span>
+  <button class="btn-secondary btn-sm" onclick="toggleSettings()">Configuración</button>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <button class="active" onclick="showTab('establecimientos', this)">🏨 Establecimientos</button>
+    <button onclick="showTab('inventario', this)">📦 Inventario</button>
+    <button onclick="showTab('reservas', this)">📅 Reservas</button>
+    <div class="sidebar-sep"></div>
+    <button onclick="toggleSettings()" class="text-muted">⚙️ Configuración</button>
+  </nav>
+
+  <main>
+    <!-- ══════════════════════════════════════
+         TAB: ESTABLECIMIENTOS
+    ══════════════════════════════════════ -->
+    <div id="tab-establecimientos" class="tab-panel active">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Establecimientos</span>
+          <button class="btn-primary" onclick="openEstModal()">+ Nuevo establecimiento</button>
+        </div>
+        <div class="table-wrap">
+          <table id="estTable">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Slug</th>
+                <th>Aforo defecto</th>
+                <th>Intervalo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="estTbody">
+              <tr><td colspan="7"><div class="empty-state"><div class="icon">🏨</div><p>Cargando...</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         TAB: INVENTARIO
+    ══════════════════════════════════════ -->
+    <div id="tab-inventario" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Gestión de Inventario / Aforo</span>
+        </div>
+        <div class="flex" style="margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
+            <label style="white-space:nowrap">Establecimiento:</label>
+            <select id="invEstSelect" onchange="loadInventario()" style="min-width:220px;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+              <option value="">— Selecciona —</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="invCalendar" style="display:none">
+          <div class="cal-header">
+            <button class="btn-icon" onclick="changeMonth(-1)">‹</button>
+            <h3 id="calTitle">—</h3>
+            <button class="btn-icon" onclick="changeMonth(1)">›</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+
+          <div id="invDayDetail" class="mt-20" style="display:none">
+            <div class="card-header">
+              <span class="card-title" id="invDayTitle">Día seleccionado</span>
+              <button class="btn-primary btn-sm" onclick="openSlotModal()">+ Añadir override</button>
+            </div>
+            <div class="slots-container" id="slotsContainer"></div>
+          </div>
+        </div>
+        <div id="invEmpty" class="empty-state">
+          <div class="icon">📦</div>
+          <p>Selecciona un establecimiento para gestionar su inventario</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         TAB: RESERVAS
+    ══════════════════════════════════════ -->
+    <div id="tab-reservas" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Reservas</span>
+          <button class="btn-secondary btn-sm" onclick="exportCSV()">⬇ Exportar CSV</button>
+        </div>
+        <div class="booking-filters">
+          <div class="form-group">
+            <label>Establecimiento</label>
+            <select id="bkEstSelect" onchange="loadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;min-width:200px">
+              <option value="">— Todos —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Desde</label>
+            <input id="bkFrom" type="date" onchange="loadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+          </div>
+          <div class="form-group">
+            <label>Hasta</label>
+            <input id="bkTo" type="date" onchange="loadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+          </div>
+          <button class="btn-secondary" onclick="loadReservas()">🔍 Buscar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Personas</th>
+                <th>Establecimiento</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="bkTbody">
+              <tr><td colspan="8"><div class="empty-state"><p>Selecciona filtros y busca</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Establecimiento
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="estModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="estModalTitle">Nuevo establecimiento</h2>
+      <button class="close-btn" onclick="closeModal('estModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="estId">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input id="estNombre" type="text" placeholder="Ej: Spa del Bosque">
+        </div>
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select id="estTipo">
+            <option value="spa">Spa</option>
+            <option value="restaurante">Restaurante</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Slug (URL) *</label>
+          <input id="estSlug" type="text" placeholder="spa-del-bosque" oninput="autoSlug(false)">
+        </div>
+        <div class="form-group">
+          <label>Email de notificaciones</label>
+          <input id="estEmail" type="email" placeholder="admin@hotel.com">
+        </div>
+        <div class="form-group">
+          <label>Aforo por defecto (personas/slot)</label>
+          <input id="estAforo" type="number" value="10" min="1">
+        </div>
+        <div class="form-group">
+          <label>Intervalo entre slots (min)</label>
+          <input id="estIntervalo" type="number" value="60" min="15" step="15">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-title">Colores del widget</p>
+      <div class="form-grid cols3">
+        <div class="form-group">
+          <label>Color primario</label>
+          <div class="color-row">
+            <input type="color" id="estColorPicker1" value="#1a1a2e" oninput="syncColor(this,'estColorPrimary')">
+            <input type="text" id="estColorPrimary" value="#1a1a2e" placeholder="#1a1a2e" oninput="syncColor(this,'estColorPicker1',true)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Color fondo</label>
+          <div class="color-row">
+            <input type="color" id="estColorPicker2" value="#f0ede8" oninput="syncColor(this,'estColorSecondary')">
+            <input type="text" id="estColorSecondary" value="#f0ede8" placeholder="#f0ede8" oninput="syncColor(this,'estColorPicker2',true)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>URL logo (opcional)</label>
+          <input id="estLogo" type="url" placeholder="https://...">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-title">Horario semanal</p>
+      <div class="week-grid" id="weekGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('estModal')">Cancelar</button>
+      <button class="btn-primary" onclick="saveEstablishment()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Embed code
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="embedModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h2>Código de integración</h2>
+      <button class="close-btn" onclick="closeModal('embedModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px">Pega este código en cualquier página web donde quieras mostrar el widget:</p>
+      <div class="embed-box" id="embedBox">
+        <button class="copy-btn" onclick="copyEmbed()">Copiar</button>
+        <pre id="embedCode" style="white-space:pre-wrap"></pre>
+      </div>
+      <div class="mt-12" style="font-size:12px;color:var(--text-muted)">
+        El widget carga automáticamente los colores y nombre desde la base de datos.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeModal('embedModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Dueños del establecimiento
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="ownersModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h2 id="ownersModalTitle">Dueños</h2>
+      <button class="close-btn" onclick="closeModal('ownersModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="ownersList" style="margin-bottom:16px"></div>
+      <div class="divider"></div>
+      <p class="section-title" style="margin-bottom:12px">Añadir nuevo dueño</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input id="ownerNombre" type="text" placeholder="Nombre completo">
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input id="ownerEmail" type="email" placeholder="email@ejemplo.com">
+        </div>
+        <div class="form-group form-full">
+          <label>Contraseña *</label>
+          <input id="ownerPassword" type="password" placeholder="Mínimo 6 caracteres">
+        </div>
+      </div>
+      <button class="btn-primary mt-12" onclick="createOwner()">+ Crear dueño</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeModal('ownersModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Slot/Override de inventario
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="slotModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h2 id="slotModalTitle">Override de aforo</h2>
+      <button class="close-btn" onclick="closeModal('slotModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px" id="slotModalDate"></p>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group">
+          <label>Hora concreta (vacío = aplica a todo el día)</label>
+          <input id="slotHora" type="time" placeholder="HH:MM">
+        </div>
+        <div class="form-group">
+          <label>Aforo máximo *</label>
+          <input id="slotAforo" type="number" min="0" placeholder="0 = cerrado">
+        </div>
+        <div class="form-group">
+          <label>Motivo (opcional)</label>
+          <input id="slotMotivo" type="text" placeholder="Ej: Evento privado, mantenimiento...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('slotModal')">Cancelar</button>
+      <button class="btn-primary" onclick="saveSlotOverride()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// CONFIG & SUPABASE
+// ══════════════════════════════════════
+const CFG_URL_KEY = 'sb_url';
+const CFG_KEY_KEY = 'sb_key';
+
+function getCfg() {
+  return {
+    url: localStorage.getItem(CFG_URL_KEY) || '',
+    key: localStorage.getItem(CFG_KEY_KEY) || ''
+  };
+}
+
+function saveSettings() {
+  const url = document.getElementById('cfgUrl').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('cfgKey').value.trim();
+  if (!url || !key) { showToast('Rellena URL y clave', 'error'); return; }
+  localStorage.setItem(CFG_URL_KEY, url);
+  localStorage.setItem(CFG_KEY_KEY, key);
+  updateCfgStatus();
+  showToast('Configuración guardada ✓');
+  document.getElementById('settingsBar').classList.remove('open');
+  initApp();
+}
+
+function updateCfgStatus() {
+  const { url, key } = getCfg();
+  const el = document.getElementById('cfgStatus');
+  if (url && key) {
+    const host = new URL(url).hostname;
+    el.textContent = '✓ ' + host;
+    el.style.color = '#a8dadc';
+  } else {
+    el.textContent = '⚠ Sin configurar';
+    el.style.color = '#f4a261';
+  }
+}
+
+function toggleSettings() {
+  const bar = document.getElementById('settingsBar');
+  bar.classList.toggle('open');
+  const { url, key } = getCfg();
+  document.getElementById('cfgUrl').value = url;
+  document.getElementById('cfgKey').value = key;
+}
+
+async function sbFetch(path, opts = {}) {
+  const { url, key } = getCfg();
+  if (!url || !key) { showToast('Configura Supabase primero', 'error'); throw new Error('No config'); }
+  const headers = {
+    'apikey': key,
+    'Authorization': 'Bearer ' + key,
+    'Content-Type': 'application/json',
+    ...(opts.headers || {})
+  };
+  if (opts.method && opts.method !== 'GET') headers['Prefer'] = 'return=representation';
+  const res = await fetch(url + '/rest/v1' + path, { ...opts, headers });
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+  if (!res.ok) throw new Error(data?.message || data?.error || 'Error ' + res.status);
+  return data;
+}
+
+// ══════════════════════════════════════
+// TABS
+// ══════════════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav.sidebar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'inventario') refreshInvEstSelect();
+  if (name === 'reservas') { refreshBkEstSelect(); setDefaultDateRange(); }
+}
+
+// ══════════════════════════════════════
+// ESTABLECIMIENTOS
+// ══════════════════════════════════════
+let establishments = [];
+
+async function loadEstablishments() {
+  try {
+    establishments = await sbFetch('/establishments?select=*&order=created_at.desc');
+    renderEstTable();
+    refreshInvEstSelect();
+    refreshBkEstSelect();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function renderEstTable() {
+  const tbody = document.getElementById('estTbody');
+  if (!establishments.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">🏨</div><p>No hay establecimientos. ¡Crea el primero!</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = establishments.map(e => `
+    <tr>
+      <td><strong>${e.nombre}</strong></td>
+      <td><span class="badge badge-blue">${e.tipo}</span></td>
+      <td><code style="font-size:11px">${e.slug}</code></td>
+      <td>${e.aforo_default}</td>
+      <td>${e.intervalo_min} min</td>
+      <td><span class="badge ${e.activo ? 'badge-green' : 'badge-gray'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
+      <td>
+        <div class="flex">
+          <button class="btn-secondary btn-sm" onclick="showEmbedCode('${e.id}','${e.nombre}')">📋 Embed</button>
+          <button class="btn-secondary btn-sm" onclick="openOwnersModal('${e.id}','${e.nombre}')">👤 Dueños</button>
+          <button class="btn-secondary btn-sm" onclick="editEst('${e.id}')">✏️</button>
+          <button class="btn-danger btn-sm" onclick="toggleActive('${e.id}',${e.activo})">${e.activo ? '⏸' : '▶'}</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function showEmbedCode(id, nombre) {
+  const { url: sbUrl } = getCfg();
+  // Use n8n webhook base — user can update if needed
+  const widgetUrl = window.location.origin + window.location.pathname.replace('admin.html', 'widget-reservas.js');
+  const code = `<!-- Widget de reservas: ${nombre} -->
+<div id="hotel-reservas"></div>
+<script src="${widgetUrl}?id=${id}"><\/script>`;
+  document.getElementById('embedCode').textContent = code;
+  openModal('embedModal');
+}
+
+function copyEmbed() {
+  const text = document.getElementById('embedCode').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Copiado al portapapeles ✓'));
+}
+
+// ── Modal establecimiento ──
+const DAYS = ['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
+const DAY_KEYS = ['lun','mar','mie','jue','vie','sab','dom'];
+
+function buildWeekGrid(horario = {}) {
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = DAYS.map((day, i) => {
+    const key = DAY_KEYS[i];
+    const h = horario[key] || null;
+    const closed = !h;
+    // h puede ser array ["10:00","20:00"] o objeto {apertura,cierre} (legado)
+    const apertura = h ? (Array.isArray(h) ? h[0] : h.apertura) : '10:00';
+    const cierre   = h ? (Array.isArray(h) ? h[1] : h.cierre)   : '20:00';
+    return `
+    <div class="day-block">
+      <div class="day-name">${day.slice(0,3)}</div>
+      <input type="time" id="hr_${key}_open" value="${apertura}" ${closed ? 'disabled' : ''}>
+      <input type="time" id="hr_${key}_close" value="${cierre}" ${closed ? 'disabled' : ''}>
+      <label class="closed">
+        <input type="checkbox" id="hr_${key}_closed" ${closed ? 'checked' : ''} onchange="toggleDayClosed('${key}',this.checked)">
+        Cerrado
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function toggleDayClosed(key, isClosed) {
+  document.getElementById('hr_' + key + '_open').disabled = isClosed;
+  document.getElementById('hr_' + key + '_close').disabled = isClosed;
+}
+
+function getHorarioFromForm() {
+  const h = {};
+  DAY_KEYS.forEach(key => {
+    const closed = document.getElementById('hr_' + key + '_closed').checked;
+    if (!closed) {
+      h[key] = [
+        document.getElementById('hr_' + key + '_open').value,
+        document.getElementById('hr_' + key + '_close').value
+      ];
+    }
+  });
+  return h;
+}
+
+function openEstModal(id = null) {
+  document.getElementById('estId').value = '';
+  document.getElementById('estNombre').value = '';
+  document.getElementById('estSlug').value = '';
+  document.getElementById('estTipo').value = 'spa';
+  document.getElementById('estEmail').value = '';
+  document.getElementById('estAforo').value = 10;
+  document.getElementById('estIntervalo').value = 60;
+  document.getElementById('estColorPrimary').value = '#1a1a2e';
+  document.getElementById('estColorPicker1').value = '#1a1a2e';
+  document.getElementById('estColorSecondary').value = '#f0ede8';
+  document.getElementById('estColorPicker2').value = '#f0ede8';
+  document.getElementById('estLogo').value = '';
+  document.getElementById('estModalTitle').textContent = 'Nuevo establecimiento';
+  buildWeekGrid();
+  openModal('estModal');
+}
+
+function editEst(id) {
+  const est = establishments.find(e => e.id === id);
+  if (!est) return;
+  document.getElementById('estId').value = est.id;
+  document.getElementById('estNombre').value = est.nombre;
+  document.getElementById('estSlug').value = est.slug;
+  document.getElementById('estTipo').value = est.tipo;
+  document.getElementById('estEmail').value = (est.config && est.config.email) || '';
+  document.getElementById('estAforo').value = est.aforo_default;
+  document.getElementById('estIntervalo').value = est.intervalo_min;
+  const cfg = est.config || {};
+  const p = cfg.color_primary || '#1a1a2e';
+  const s = cfg.color_secondary || '#f0ede8';
+  document.getElementById('estColorPrimary').value = p;
+  document.getElementById('estColorPicker1').value = isValidHex(p) ? p : '#1a1a2e';
+  document.getElementById('estColorSecondary').value = s;
+  document.getElementById('estColorPicker2').value = isValidHex(s) ? s : '#f0ede8';
+  document.getElementById('estLogo').value = cfg.logo_url || '';
+  document.getElementById('estModalTitle').textContent = 'Editar: ' + est.nombre;
+  buildWeekGrid(est.horario || {});
+  openModal('estModal');
+}
+
+async function saveEstablishment() {
+  const id = document.getElementById('estId').value;
+  const nombre = document.getElementById('estNombre').value.trim();
+  const slug = document.getElementById('estSlug').value.trim();
+  if (!nombre || !slug) { showToast('Nombre y slug son obligatorios', 'error'); return; }
+
+  const payload = {
+    nombre,
+    slug,
+    tipo: document.getElementById('estTipo').value,
+    aforo_default: parseInt(document.getElementById('estAforo').value) || 10,
+    intervalo_min: parseInt(document.getElementById('estIntervalo').value) || 60,
+    horario: getHorarioFromForm(),
+    activo: true,
+    config: {
+      color_primary: document.getElementById('estColorPrimary').value,
+      color_secondary: document.getElementById('estColorSecondary').value,
+      logo_url: document.getElementById('estLogo').value.trim(),
+      email: document.getElementById('estEmail').value.trim()
+    }
+  };
+
+  try {
+    if (id) {
+      await sbFetch('/establishments?id=eq.' + id, {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      });
+      showToast('Establecimiento actualizado ✓');
+    } else {
+      payload.id = crypto.randomUUID();
+      payload.created_at = new Date().toISOString();
+      await sbFetch('/establishments', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      showToast('Establecimiento creado ✓');
+    }
+    closeModal('estModal');
+    await loadEstablishments();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function toggleActive(id, current) {
+  try {
+    await sbFetch('/establishments?id=eq.' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({ activo: !current })
+    });
+    showToast(current ? 'Desactivado' : 'Activado');
+    await loadEstablishments();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function autoSlug(fromNombre) {
+  if (!fromNombre) return;
+  const nombre = document.getElementById('estNombre').value;
+  const slug = nombre.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  document.getElementById('estSlug').value = slug;
+}
+document.getElementById('estNombre').addEventListener('input', () => {
+  if (!document.getElementById('estId').value) autoSlug(true);
+});
+
+// ══════════════════════════════════════
+// DUEÑOS
+// ══════════════════════════════════════
+let _ownersEstId = null;
+
+async function openOwnersModal(estId, estNombre) {
+  _ownersEstId = estId;
+  document.getElementById('ownersModalTitle').textContent = 'Dueños — ' + estNombre;
+  document.getElementById('ownerNombre').value = '';
+  document.getElementById('ownerEmail').value = '';
+  document.getElementById('ownerPassword').value = '';
+  openModal('ownersModal');
+  await loadOwnersList();
+}
+
+async function loadOwnersList() {
+  const container = document.getElementById('ownersList');
+  container.innerHTML = '<p class="text-muted" style="font-size:13px">Cargando...</p>';
+  try {
+    const owners = await sbFetch(`/owners?establishment_id=eq.${_ownersEstId}&select=*&order=created_at.asc`);
+    if (!owners.length) {
+      container.innerHTML = '<p class="text-muted" style="font-size:13px">Sin dueños asignados aún.</p>';
+      return;
+    }
+    container.innerHTML = owners.map(o => `
+      <div class="slot-item">
+        <span style="font-size:18px">${o.activo ? '👤' : '🚫'}</span>
+        <span class="slot-time" style="min-width:140px">${o.nombre}</span>
+        <span class="slot-aforo">${o.email}</span>
+        <span class="badge ${o.activo ? 'badge-green' : 'badge-gray'}">${o.activo ? 'Activo' : 'Inactivo'}</span>
+        <button class="btn-danger btn-sm" onclick="toggleOwner('${o.id}',${o.activo})">${o.activo ? '⏸' : '▶'}</button>
+        <button class="btn-danger btn-sm" onclick="deleteOwner('${o.id}')">🗑</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = `<p class="text-muted" style="font-size:13px;color:var(--danger)">${e.message}</p>`;
+  }
+}
+
+async function hashPassword(password) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function createOwner() {
+  const nombre = document.getElementById('ownerNombre').value.trim();
+  const email = document.getElementById('ownerEmail').value.trim();
+  const password = document.getElementById('ownerPassword').value;
+  if (!email || !password) { showToast('Email y contraseña son obligatorios', 'error'); return; }
+  if (password.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
+  try {
+    const password_hash = await hashPassword(password);
+    await sbFetch('/owners', {
+      method: 'POST',
+      body: JSON.stringify({
+        id: crypto.randomUUID(),
+        establishment_id: _ownersEstId,
+        nombre: nombre || email,
+        email,
+        password_hash,
+        activo: true,
+        created_at: new Date().toISOString()
+      })
+    });
+    showToast('Dueño creado ✓');
+    document.getElementById('ownerNombre').value = '';
+    document.getElementById('ownerEmail').value = '';
+    document.getElementById('ownerPassword').value = '';
+    await loadOwnersList();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function toggleOwner(id, current) {
+  try {
+    await sbFetch('/owners?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ activo: !current }) });
+    showToast(current ? 'Desactivado' : 'Activado');
+    await loadOwnersList();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function deleteOwner(id) {
+  if (!confirm('¿Eliminar este dueño? No podrá acceder al portal.')) return;
+  try {
+    await sbFetch('/owners?id=eq.' + id, { method: 'DELETE' });
+    showToast('Eliminado');
+    await loadOwnersList();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// ══════════════════════════════════════
+// INVENTARIO
+// ══════════════════════════════════════
+let invEstId = null;
+let invYear = new Date().getFullYear();
+let invMonth = new Date().getMonth(); // 0-indexed
+let invOverrides = [];
+let invSelectedDate = null;
+
+function refreshInvEstSelect() {
+  const sel = document.getElementById('invEstSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Selecciona —</option>' +
+    establishments.map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${e.nombre}</option>`).join('');
+}
+
+async function loadInventario() {
+  const sel = document.getElementById('invEstSelect');
+  invEstId = sel.value;
+  if (!invEstId) {
+    document.getElementById('invCalendar').style.display = 'none';
+    document.getElementById('invEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('invCalendar').style.display = 'block';
+  document.getElementById('invEmpty').style.display = 'none';
+  await fetchMonthOverrides();
+  renderCalendar();
+}
+
+async function fetchMonthOverrides() {
+  const from = `${invYear}-${String(invMonth+1).padStart(2,'0')}-01`;
+  const lastDay = new Date(invYear, invMonth+1, 0).getDate();
+  const to = `${invYear}-${String(invMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+  try {
+    invOverrides = await sbFetch(`/inventory?establishment_id=eq.${invEstId}&fecha=gte.${from}&fecha=lte.${to}&select=*&order=fecha.asc,hora.asc`);
+  } catch (e) {
+    invOverrides = [];
+    showToast(e.message, 'error');
+  }
+}
+
+function changeMonth(delta) {
+  invMonth += delta;
+  if (invMonth > 11) { invMonth = 0; invYear++; }
+  if (invMonth < 0)  { invMonth = 11; invYear--; }
+  loadInventario();
+}
+
+function renderCalendar() {
+  const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('calTitle').textContent = MONTH_NAMES[invMonth] + ' ' + invYear;
+  const grid = document.getElementById('calGrid');
+  const dayNames = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(invYear, invMonth, 1);
+  const lastDay = new Date(invYear, invMonth+1, 0);
+  // Monday-first offset
+  let startOffset = firstDay.getDay() - 1;
+  if (startOffset < 0) startOffset = 6;
+
+  const overrideDates = new Set(invOverrides.map(o => o.fecha));
+
+  let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+  for (let i = 0; i < startOffset; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const dateStr = `${invYear}-${String(invMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const cellDate = new Date(invYear, invMonth, day);
+    const isPast = cellDate < today;
+    const hasOverride = overrideDates.has(dateStr);
+    html += `<div class="cal-cell ${isPast?'past':''} ${hasOverride?'has-override':''}" onclick="selectInvDay('${dateStr}')">
+      <span class="day-num">${day}</span>
+      ${hasOverride ? '<span class="override-dot"></span>' : ''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+async function selectInvDay(dateStr) {
+  invSelectedDate = dateStr;
+  document.getElementById('invDayDetail').style.display = 'block';
+  document.getElementById('invDayTitle').textContent = 'Overrides para: ' + dateStr;
+  renderDaySlots(dateStr);
+}
+
+function renderDaySlots(dateStr) {
+  const dayOverrides = invOverrides.filter(o => o.fecha === dateStr);
+  const container = document.getElementById('slotsContainer');
+  if (!dayOverrides.length) {
+    container.innerHTML = '<div class="text-muted" style="padding:12px;font-size:13px">Sin overrides — usa el aforo por defecto del establecimiento.<br>Añade uno para modificar la disponibilidad de este día.</div>';
+    return;
+  }
+  container.innerHTML = dayOverrides.map(o => `
+    <div class="slot-item">
+      <span class="slot-time">${o.hora ? o.hora.slice(0,5) : '🌍 Todo el día'}</span>
+      <span class="slot-aforo">Aforo máx: <strong>${o.aforo_maximo}</strong>${o.aforo_maximo === 0 ? ' <span class="badge badge-gray">Cerrado</span>' : ''}</span>
+      <span class="text-muted" style="font-size:11px">${o.motivo || ''}</span>
+      <button class="btn-danger btn-sm" onclick="deleteOverride('${o.id}','${dateStr}')">🗑</button>
+    </div>
+  `).join('');
+}
+
+function openSlotModal() {
+  if (!invSelectedDate) { showToast('Selecciona un día primero', 'error'); return; }
+  document.getElementById('slotModalDate').textContent = 'Fecha: ' + invSelectedDate;
+  document.getElementById('slotHora').value = '';
+  document.getElementById('slotAforo').value = '';
+  document.getElementById('slotMotivo').value = '';
+  openModal('slotModal');
+}
+
+async function saveSlotOverride() {
+  const hora = document.getElementById('slotHora').value;
+  const aforo = document.getElementById('slotAforo').value;
+  const motivo = document.getElementById('slotMotivo').value.trim();
+  if (aforo === '') { showToast('Aforo es obligatorio', 'error'); return; }
+
+  const payload = {
+    id: crypto.randomUUID(),
+    establishment_id: invEstId,
+    fecha: invSelectedDate,
+    hora: hora || null,
+    aforo_maximo: parseInt(aforo),
+    motivo: motivo || null
+  };
+  try {
+    await sbFetch('/inventory', { method: 'POST', body: JSON.stringify(payload) });
+    showToast('Override guardado ✓');
+    closeModal('slotModal');
+    await fetchMonthOverrides();
+    renderCalendar();
+    renderDaySlots(invSelectedDate);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function deleteOverride(id, dateStr) {
+  if (!confirm('¿Eliminar este override?')) return;
+  try {
+    await sbFetch('/inventory?id=eq.' + id, { method: 'DELETE' });
+    showToast('Eliminado');
+    await fetchMonthOverrides();
+    renderCalendar();
+    renderDaySlots(dateStr);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════
+// RESERVAS
+// ══════════════════════════════════════
+let bkData = [];
+
+function refreshBkEstSelect() {
+  const sel = document.getElementById('bkEstSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Todos —</option>' +
+    establishments.map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${e.nombre}</option>`).join('');
+}
+
+function setDefaultDateRange() {
+  const today = new Date();
+  const from = new Date(today); from.setDate(1);
+  const to = new Date(today.getFullYear(), today.getMonth()+1, 0);
+  document.getElementById('bkFrom').value = from.toISOString().slice(0,10);
+  document.getElementById('bkTo').value = to.toISOString().slice(0,10);
+}
+
+async function loadReservas() {
+  const estId = document.getElementById('bkEstSelect').value;
+  const from = document.getElementById('bkFrom').value;
+  const to = document.getElementById('bkTo').value;
+
+  let path = '/bookings?select=*,establishments(nombre)&order=fecha.asc,hora.asc';
+  if (estId) path += `&establishment_id=eq.${estId}`;
+  if (from) path += `&fecha=gte.${from}`;
+  if (to) path += `&fecha=lte.${to}`;
+
+  try {
+    bkData = await sbFetch(path);
+    renderReservasTable();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function renderReservasTable() {
+  const tbody = document.getElementById('bkTbody');
+  if (!bkData.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">📅</div><p>No hay reservas en este período</p></div></td></tr>`;
+    return;
+  }
+  const estadoColors = { confirmada:'badge-green', pendiente:'badge-amber', cancelada:'badge-gray' };
+  tbody.innerHTML = bkData.map(b => `
+    <tr>
+      <td>${b.fecha}</td>
+      <td>${b.hora ? b.hora.slice(0,5) : '—'}</td>
+      <td>${b.nombre}</td>
+      <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
+      <td style="text-align:center">${b.personas}</td>
+      <td>${b.establishments ? b.establishments.nombre : b.establishment_id.slice(0,8)+'…'}</td>
+      <td><span class="badge ${estadoColors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
+      <td>
+        <select onchange="updateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px;font-size:11px">
+          <option value="">Cambiar…</option>
+          <option value="confirmada">Confirmar</option>
+          <option value="cancelada">Cancelar</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateEstado(id, estado) {
+  if (!estado) return;
+  try {
+    await sbFetch('/bookings?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ estado }) });
+    showToast('Estado actualizado ✓');
+    await loadReservas();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function exportCSV() {
+  if (!bkData.length) { showToast('No hay datos para exportar', 'error'); return; }
+  const cols = ['fecha','hora','nombre','email','personas','estado','notas'];
+  const header = cols.join(',');
+  const rows = bkData.map(b => cols.map(c => `"${(b[c]||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'reservas_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+let _toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type === 'error' ? ' error' : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+function syncColor(src, targetId, reverse = false) {
+  const target = document.getElementById(targetId);
+  if (reverse) {
+    if (isValidHex(src.value)) target.value = src.value;
+  } else {
+    target.value = src.value;
+  }
+}
+
+function isValidHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v); }
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('open'); });
+});
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function initApp() {
+  updateCfgStatus();
+  const { url, key } = getCfg();
+  if (url && key) {
+    loadEstablishments();
+  } else {
+    document.getElementById('settingsBar').classList.add('open');
+    document.getElementById('cfgUrl').focus();
+  }
+}
+
+initApp();
+</script>
+</body>
+</html>
