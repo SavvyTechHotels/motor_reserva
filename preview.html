@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview — Widget de Reservas</title>
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f6f3f1;
+      padding: 24px;
+      font-family: system-ui, sans-serif;
+    }
+    #no-id {
+      text-align: center;
+      color: #7a8fa0;
+      font-size: 14px;
+    }
+    #no-id code {
+      background: #e4ddd6;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div id="hotel-reservas"></div>
+  <div id="no-id" style="display:none">
+    <p>Añade <code>?id=ESTABLISHMENT_ID</code> a la URL para previsualizar un widget.</p>
+  </div>
+  <script>
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) {
+      document.getElementById('hotel-reservas').style.display = 'none';
+      document.getElementById('no-id').style.display = 'block';
+    }
+  </script>
+  <script id="widget-script"></script>
+  <script>
+    const id2 = new URLSearchParams(window.location.search).get('id');
+    if (id2) {
+      const s = document.getElementById('widget-script');
+      s.src = 'widget-reservas.js?id=' + encodeURIComponent(id2);
+    }
+  </script>
+</body>
+</html>
