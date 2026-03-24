@@ -193,6 +193,48 @@
     /* password change */
     .pwd-section { background: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; }
 
+    /* ── Est picker screen ── */
+    #estPickerScreen {
+      display: none;
+      min-height: 100vh;
+      background: var(--bg);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #estPickerScreen.visible { display: flex; }
+    .picker-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .picker-card h2 { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+    .picker-card p { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
+    .picker-list { display: flex; flex-direction: column; gap: 10px; }
+    .picker-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      width: 100%;
+      transition: border-color .15s, background .15s;
+    }
+    .picker-item:hover { border-color: var(--primary); background: #f0f7fb; }
+    .picker-item .picker-icon { font-size: 26px; flex-shrink: 0; }
+    .picker-item .picker-name { font-weight: 600; font-size: 14px; color: var(--text); }
+    .picker-item .picker-tipo { font-size: 12px; color: var(--text-muted); }
+
     /* ── Hamburger ── */
     .hamburger {
       display: none;
@@ -304,12 +346,16 @@
 <!-- ══════════════════════════════════════
      APP
 ══════════════════════════════════════ -->
+<!-- ══ SELECTOR DE ESTABLECIMIENTO ══ -->
+<div id="estPickerScreen" style="display:none"></div>
+
 <div id="appScreen">
   <header>
     <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menú">
       <span></span><span></span><span></span>
     </button>
     <h1 id="headerTitle">Mi Establecimiento</h1>
+    <button id="switchEstBtn" onclick="showEstPicker()" style="display:none;background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;flex-shrink:0">⇄ Cambiar</button>
     <span class="user-badge" id="headerUser"></span>
     <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
   </header>
@@ -493,9 +539,11 @@
 
 <script>
 // ══════════════════════════════════════
-// CONFIG SUPABASE — misma URL/Key que admin
-// Se guarda en localStorage al hacer login
+// CONFIG SUPABASE
 // ══════════════════════════════════════
+const DEFAULT_SB_URL = 'https://ritjspwzwllptwqmeqwh.supabase.co';
+const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdGpzcHd6d2xscHR3cW1lcXdoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDI3MDkwNCwiZXhwIjoyMDg5ODQ2OTA0fQ.OWdzA9DKDBZ1co6_Wp6HAPUiLT45TJXhSehf7YCBk6M';
+
 const SB_URL_KEY = 'sb_url';
 const SB_KEY_KEY = 'sb_key';
 
@@ -504,7 +552,10 @@ let session = null; // { ownerId, ownerEmail, ownerNombre, establishmentId }
 let estData = null; // datos del establecimiento
 
 function getSb() {
-  return { url: localStorage.getItem(SB_URL_KEY) || '', key: localStorage.getItem(SB_KEY_KEY) || '' };
+  return {
+    url: localStorage.getItem(SB_URL_KEY) || DEFAULT_SB_URL,
+    key: localStorage.getItem(SB_KEY_KEY) || DEFAULT_SB_KEY
+  };
 }
 
 async function sbFetch(path, opts = {}) {
@@ -541,18 +592,6 @@ async function doLogin() {
 
   if (!email || !password) { errEl.textContent = 'Introduce email y contraseña'; errEl.style.display = 'block'; return; }
 
-  // Necesitamos que el admin haya guardado la config de Supabase en este navegador
-  // Si no está, el usuario debe pedírsela al admin o el admin puede pre-configurarla
-  const { url, key } = getSb();
-  if (!url || !key) {
-    // Pedimos la config al usuario (primera vez)
-    const sbUrl = prompt('URL de Supabase (pregunta al administrador):');
-    const sbKey = prompt('Clave de acceso (pregunta al administrador):');
-    if (!sbUrl || !sbKey) return;
-    localStorage.setItem(SB_URL_KEY, sbUrl.trim().replace(/\/$/, ''));
-    localStorage.setItem(SB_KEY_KEY, sbKey.trim());
-  }
-
   try {
     const hash = await hashPassword(password);
     const result = await sbFetch(`/owners?email=eq.${encodeURIComponent(email)}&password_hash=eq.${hash}&activo=eq.true&select=*`);
@@ -566,10 +605,10 @@ async function doLogin() {
       ownerId: owner.id,
       ownerEmail: owner.email,
       ownerNombre: owner.nombre,
-      establishmentId: owner.establishment_id
+      establishmentId: null
     };
     sessionStorage.setItem('ownerSession', JSON.stringify(session));
-    await startApp();
+    await pickEstablishment();
   } catch (e) {
     errEl.textContent = e.message;
     errEl.style.display = 'block';
@@ -579,8 +618,10 @@ async function doLogin() {
 function logout() {
   session = null;
   estData = null;
+  _ownerEstablishments = [];
   sessionStorage.removeItem('ownerSession');
-  document.getElementById('appScreen').style.display = 'none';
+  hide('appScreen');
+  hide('estPickerScreen');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginPassword').value = '';
 }
@@ -588,10 +629,101 @@ function logout() {
 // ══════════════════════════════════════
 // APP INIT
 // ══════════════════════════════════════
+let _ownerEstablishments = []; // todos los establecimientos del dueño
+
+async function pickEstablishment() {
+  hide('loginScreen'); hide('appScreen'); hide('estPickerScreen');
+
+  // Paso 1: obtener IDs de establecimientos desde owner_establishments (sin join)
+  try {
+    const links = await sbFetch(`/owner_establishments?owner_id=eq.${session.ownerId}&select=establishment_id`);
+    const ids = links.map(l => l.establishment_id).filter(Boolean);
+    if (ids.length) {
+      const ests = await sbFetch(`/establishments?id=in.(${ids.join(',')})&select=*&order=nombre.asc`);
+      _ownerEstablishments = ests;
+    }
+  } catch {
+    _ownerEstablishments = [];
+  }
+
+  // Fallback: usar establishment_id del campo directo en owners (propietarios antiguos)
+  if (!_ownerEstablishments.length) {
+    try {
+      const owners = await sbFetch(`/owners?id=eq.${session.ownerId}&select=establishment_id`);
+      const estId = owners[0]?.establishment_id;
+      if (estId) {
+        const ests = await sbFetch(`/establishments?id=eq.${estId}&select=*`);
+        _ownerEstablishments = ests;
+      }
+    } catch {}
+  }
+
+  if (!_ownerEstablishments.length) {
+    showToast('No tienes establecimientos asignados. Contacta con el administrador.', 'error');
+    show('loginScreen');
+    return;
+  }
+
+  if (_ownerEstablishments.length === 1) {
+    session.establishmentId = _ownerEstablishments[0].id;
+    sessionStorage.setItem('ownerSession', JSON.stringify(session));
+    await startApp();
+    return;
+  }
+
+  showEstPicker();
+}
+
+function showEstPicker() {
+  hide('loginScreen'); hide('appScreen');
+  const screen = document.getElementById('estPickerScreen');
+  const icons = { spa: '♨️', restaurante: '🍽️', otro: '🏨' };
+  screen.innerHTML = `
+    <div class="picker-card">
+      <div style="margin-bottom:20px">
+        <svg width="100" height="28" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="#0e4159"/>
+          <text x="16" y="22" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="14" fill="white">ST</text>
+          <text x="42" y="22" font-family="Inter,sans-serif" font-weight="700" font-size="15" fill="#0e4159">SavvyTech</text>
+        </svg>
+      </div>
+      <h2>¿Qué establecimiento quieres gestionar?</h2>
+      <p>Tienes acceso a ${_ownerEstablishments.length} establecimientos</p>
+      <div class="picker-list">
+        ${_ownerEstablishments.map(e => `
+          <button class="picker-item" onclick="selectEst('${e.id}')">
+            <span class="picker-icon">${icons[e.tipo] || '🏨'}</span>
+            <div>
+              <div class="picker-name">${e.nombre}</div>
+              <div class="picker-tipo">${e.tipo}</div>
+            </div>
+          </button>
+        `).join('')}
+      </div>
+      <button onclick="logout()" style="margin-top:20px;background:var(--bg);color:var(--text-muted);border:1px solid var(--border);padding:8px 16px;border-radius:8px;width:100%;cursor:pointer;font-family:inherit;font-size:13px">Cerrar sesión</button>
+    </div>`;
+  screen.style.display = 'flex';
+}
+
+function hide(id) {
+  const el = document.getElementById(id);
+  el.style.display = 'none';
+}
+
+async function selectEst(estId) {
+  session.establishmentId = estId;
+  sessionStorage.setItem('ownerSession', JSON.stringify(session));
+  hide('estPickerScreen');
+  await startApp();
+}
+
 async function startApp() {
-  document.getElementById('loginScreen').style.display = 'none';
+  hide('loginScreen'); hide('estPickerScreen');
   document.getElementById('appScreen').style.display = 'block';
   document.getElementById('headerUser').textContent = session.ownerNombre || session.ownerEmail;
+
+  // Mostrar botón "Cambiar" solo si tiene más de un establecimiento
+  document.getElementById('switchEstBtn').style.display = _ownerEstablishments.length > 1 ? 'block' : 'none';
 
   // Cargar datos del establecimiento
   const ests = await sbFetch(`/establishments?id=eq.${session.establishmentId}&select=*`);
@@ -947,12 +1079,17 @@ function isValidHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v); }
 // ══════════════════════════════════════
 // INIT — restaurar sesión si existe
 // ══════════════════════════════════════
-(function init() {
+(async function init() {
   const saved = sessionStorage.getItem('ownerSession');
   if (saved) {
     try {
       session = JSON.parse(saved);
-      startApp();
+      if (session.establishmentId) {
+        // Sesión completa con establecimiento ya seleccionado
+        await pickEstablishment(); // recarga la lista de establecimientos y va directo
+      } else {
+        await pickEstablishment();
+      }
     } catch { sessionStorage.removeItem('ownerSession'); }
   }
 })();
