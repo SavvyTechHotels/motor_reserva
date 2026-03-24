@@ -852,9 +852,28 @@
       <button class="close-btn" onclick="closeModal('ownersModal')">×</button>
     </div>
     <div class="modal-body">
-      <div id="ownersList" style="margin-bottom:16px"></div>
+
+      <!-- Dueños ya vinculados -->
+      <p class="section-title">Dueños vinculados</p>
+      <div id="ownersList" style="margin-bottom:4px"></div>
+
       <div class="divider"></div>
-      <p class="section-title" style="margin-bottom:12px">Añadir nuevo dueño</p>
+
+      <!-- Vincular uno existente -->
+      <p class="section-title">Vincular dueño existente</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Selecciona un dueño que ya existe en el sistema para darle acceso a este establecimiento.</p>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="ownerLinkSelect" style="flex:1;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px;background:#fff">
+          <option value="">— Selecciona dueño —</option>
+        </select>
+        <button class="btn-primary" onclick="linkExistingOwner()">Vincular</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Crear dueño nuevo -->
+      <p class="section-title">Crear dueño nuevo</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Crea una cuenta nueva y queda automáticamente vinculada a este establecimiento.</p>
       <div class="form-grid">
         <div class="form-group">
           <label>Nombre</label>
@@ -869,7 +888,7 @@
           <input id="ownerPassword" type="password" placeholder="Mínimo 6 caracteres">
         </div>
       </div>
-      <button class="btn-primary mt-12" onclick="createOwner()">+ Crear dueño</button>
+      <button class="btn-primary mt-12" onclick="createOwner()">+ Crear y vincular</button>
     </div>
     <div class="modal-footer">
       <button class="btn-primary" onclick="closeModal('ownersModal')">Cerrar</button>
@@ -1117,6 +1136,7 @@ function renderEstTable() {
           <button class="btn-secondary btn-sm" onclick="openOwnersModal('${e.id}','${e.nombre}')">👤 Dueños</button>
           <button class="btn-secondary btn-sm" onclick="editEst('${e.id}')">✏️</button>
           <button class="btn-danger btn-sm" onclick="toggleActive('${e.id}',${e.activo})">${e.activo ? '⏸' : '▶'}</button>
+          <button class="btn-danger btn-sm" onclick="deleteEst('${e.id}','${e.nombre}')">🗑</button>
         </div>
       </td>
     </tr>
@@ -1280,6 +1300,17 @@ async function saveEstablishment() {
   }
 }
 
+async function deleteEst(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?\n\nSe borrarán también todos sus dueños, inventario y reservas. Esta acción no se puede deshacer.`)) return;
+  try {
+    await sbFetch('/establishments?id=eq.' + id, { method: 'DELETE' });
+    showToast('Establecimiento eliminado');
+    await loadEstablishments();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
 async function toggleActive(id, current) {
   try {
     await sbFetch('/establishments?id=eq.' + id, {
@@ -1320,29 +1351,69 @@ async function openOwnersModal(estId, estNombre) {
   document.getElementById('ownerNombre').value = '';
   document.getElementById('ownerEmail').value = '';
   document.getElementById('ownerPassword').value = '';
+  document.getElementById('ownerLinkSelect').innerHTML = '<option value="">Cargando...</option>';
   openModal('ownersModal');
   await loadOwnersList();
+  await loadLinkableOwners();
+}
+
+async function loadLinkableOwners() {
+  const sel = document.getElementById('ownerLinkSelect');
+  try {
+    // Todos los dueños del sistema
+    const all = await sbFetch('/owners?activo=eq.true&select=id,nombre,email&order=nombre.asc');
+    // Los ya vinculados a este establecimiento
+    const linked = await sbFetch(`/owner_establishments?establishment_id=eq.${_ownersEstId}&select=owner_id`);
+    const linkedIds = new Set(linked.map(l => l.owner_id));
+    const available = all.filter(o => !linkedIds.has(o.id));
+    if (!available.length) {
+      sel.innerHTML = '<option value="">Sin dueños disponibles para vincular</option>';
+    } else {
+      sel.innerHTML = '<option value="">— Selecciona dueño —</option>' +
+        available.map(o => `<option value="${o.id}">${o.nombre} (${o.email})</option>`).join('');
+    }
+  } catch (e) {
+    sel.innerHTML = '<option value="">Error al cargar</option>';
+  }
+}
+
+async function linkExistingOwner() {
+  const ownerId = document.getElementById('ownerLinkSelect').value;
+  if (!ownerId) { showToast('Selecciona un dueño', 'error'); return; }
+  try {
+    await sbFetch('/owner_establishments', {
+      method: 'POST',
+      body: JSON.stringify({ owner_id: ownerId, establishment_id: _ownersEstId })
+    });
+    showToast('Dueño vinculado ✓');
+    await loadOwnersList();
+    await loadLinkableOwners();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
 }
 
 async function loadOwnersList() {
   const container = document.getElementById('ownersList');
   container.innerHTML = '<p class="text-muted" style="font-size:13px">Cargando...</p>';
   try {
-    const owners = await sbFetch(`/owners?establishment_id=eq.${_ownersEstId}&select=*&order=created_at.asc`);
-    if (!owners.length) {
+    const links = await sbFetch(`/owner_establishments?establishment_id=eq.${_ownersEstId}&select=owner_id,owners(id,nombre,email,activo)`);
+    if (!links.length) {
       container.innerHTML = '<p class="text-muted" style="font-size:13px">Sin dueños asignados aún.</p>';
       return;
     }
-    container.innerHTML = owners.map(o => `
+    container.innerHTML = links.map(l => {
+      const o = l.owners;
+      return `
       <div class="slot-item">
         <span style="font-size:18px">${o.activo ? '👤' : '🚫'}</span>
         <span class="slot-time" style="min-width:140px">${o.nombre}</span>
         <span class="slot-aforo">${o.email}</span>
         <span class="badge ${o.activo ? 'badge-green' : 'badge-gray'}">${o.activo ? 'Activo' : 'Inactivo'}</span>
-        <button class="btn-danger btn-sm" onclick="toggleOwner('${o.id}',${o.activo})">${o.activo ? '⏸' : '▶'}</button>
-        <button class="btn-danger btn-sm" onclick="deleteOwner('${o.id}')">🗑</button>
-      </div>
-    `).join('');
+        <button class="btn-secondary btn-sm" onclick="toggleOwner('${o.id}',${o.activo})">${o.activo ? '⏸' : '▶'}</button>
+        <button class="btn-danger btn-sm" onclick="unlinkOwner('${o.id}','${o.nombre}')">✕ Desvincular</button>
+      </div>`;
+    }).join('');
   } catch (e) {
     container.innerHTML = `<p class="text-muted" style="font-size:13px;color:var(--danger)">${e.message}</p>`;
   }
@@ -1361,23 +1432,28 @@ async function createOwner() {
   if (password.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
   try {
     const password_hash = await hashPassword(password);
-    await sbFetch('/owners', {
+
+    // Comprobar que el email no está ya en uso
+    const existing = await sbFetch(`/owners?email=eq.${encodeURIComponent(email)}&select=id`);
+    if (existing.length) { showToast('Ese email ya existe — vincúlalo desde el desplegable de arriba', 'error'); return; }
+
+    // Crear dueño
+    const created = await sbFetch('/owners', {
       method: 'POST',
-      body: JSON.stringify({
-        id: crypto.randomUUID(),
-        establishment_id: _ownersEstId,
-        nombre: nombre || email,
-        email,
-        password_hash,
-        activo: true,
-        created_at: new Date().toISOString()
-      })
+      body: JSON.stringify({ id: crypto.randomUUID(), nombre: nombre || email, email, password_hash, activo: true, created_at: new Date().toISOString() })
     });
-    showToast('Dueño creado ✓');
+    // Vincular al establecimiento
+    await sbFetch('/owner_establishments', {
+      method: 'POST',
+      body: JSON.stringify({ owner_id: created[0].id, establishment_id: _ownersEstId })
+    });
+
+    showToast('Dueño creado y vinculado ✓');
     document.getElementById('ownerNombre').value = '';
     document.getElementById('ownerEmail').value = '';
     document.getElementById('ownerPassword').value = '';
     await loadOwnersList();
+    await loadLinkableOwners();
   } catch (e) {
     showToast(e.message, 'error');
   }
@@ -1391,11 +1467,11 @@ async function toggleOwner(id, current) {
   } catch (e) { showToast(e.message, 'error'); }
 }
 
-async function deleteOwner(id) {
-  if (!confirm('¿Eliminar este dueño? No podrá acceder al portal.')) return;
+async function unlinkOwner(ownerId, nombre) {
+  if (!confirm(`¿Desvincular a "${nombre}" de este establecimiento?`)) return;
   try {
-    await sbFetch('/owners?id=eq.' + id, { method: 'DELETE' });
-    showToast('Eliminado');
+    await sbFetch(`/owner_establishments?owner_id=eq.${ownerId}&establishment_id=eq.${_ownersEstId}`, { method: 'DELETE' });
+    showToast('Desvinculado');
     await loadOwnersList();
   } catch (e) { showToast(e.message, 'error'); }
 }
