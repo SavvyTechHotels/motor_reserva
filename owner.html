@@ -189,6 +189,84 @@
 
     /* password change */
     .pwd-section { background: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; }
+
+    /* ── Hamburger ── */
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .hamburger span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: all .25s; }
+
+    /* ── Sidebar overlay ── */
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 150;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    @media (max-width: 768px) {
+      /* Header */
+      header { padding: 0 16px; gap: 10px; }
+      header h1 { font-size: 13px; }
+      .user-badge { display: none; }
+      .hamburger { display: flex; }
+
+      /* Sidebar → drawer */
+      nav.sidebar {
+        position: fixed;
+        top: 54px; left: -210px;
+        height: calc(100vh - 54px);
+        z-index: 200;
+        transition: left .25s ease;
+        box-shadow: 4px 0 20px rgba(0,0,0,.15);
+      }
+      nav.sidebar.open { left: 0; }
+
+      /* Layout */
+      .layout { display: block; }
+      main { padding: 16px; }
+
+      /* Cards */
+      .card { padding: 14px; }
+      .card-header { flex-wrap: wrap; gap: 8px; }
+      .card-header .btn-primary { width: 100%; justify-content: center; }
+
+      /* Forms */
+      .form-grid { grid-template-columns: 1fr !important; }
+
+      /* Week grid */
+      .week-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+      /* Tables */
+      th, td { padding: 8px 10px; font-size: 12px; }
+      .flex { flex-wrap: wrap; gap: 4px; }
+      .btn-sm { padding: 5px 8px; font-size: 11px; }
+
+      /* Calendar */
+      .cal-cell { font-size: 11px; }
+      .cal-day-name { font-size: 10px; padding: 4px 0; }
+
+      /* Modals */
+      .modal-backdrop { padding: 0; align-items: flex-end; }
+      .modal { border-radius: 20px 20px 0 0; max-height: 92vh; max-width: 100%; }
+
+      /* Booking filters */
+      .booking-filters { flex-direction: column; }
+      .booking-filters .form-group input,
+      .booking-filters select { width: 100%; }
+    }
+
+    @media (max-width: 400px) {
+      .week-grid { grid-template-columns: repeat(3, 1fr); }
+    }
   </style>
 </head>
 <body>
@@ -225,12 +303,17 @@
 ══════════════════════════════════════ -->
 <div id="appScreen">
   <header>
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
     <h1 id="headerTitle">Mi Establecimiento</h1>
     <span class="user-badge" id="headerUser"></span>
     <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
   </header>
+  <!-- Sidebar overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="layout">
-    <nav class="sidebar">
+    <nav class="sidebar" id="sidebar">
       <button class="active" onclick="showTab('config', this)">⚙️ Mi establecimiento</button>
       <button onclick="showTab('inventario', this)">📦 Inventario</button>
       <button onclick="showTab('reservas', this)">📅 Reservas</button>
@@ -819,11 +902,23 @@ async function changePassword() {
 // ══════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('open', isOpen);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
 function showTab(name, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav.sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
+  closeSidebar();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }

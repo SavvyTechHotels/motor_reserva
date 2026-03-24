@@ -384,6 +384,39 @@
     #toast.show { opacity: 1; transform: translateY(0); }
     #toast.error { background: var(--danger); }
 
+    /* ── Login ── */
+    #adminLoginScreen {
+      display: none;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      padding: 24px;
+    }
+    #adminLoginScreen.visible { display: flex; }
+    #adminApp { display: none; }
+    #adminApp.visible { display: block; }
+    .admin-login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(14,65,89,.12);
+      text-align: center;
+    }
+    .admin-login-logo { margin-bottom: 20px; }
+    .admin-login-card h1 { font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+    .admin-login-card p { color: var(--text-muted); font-size: 13px; margin-bottom: 28px; }
+    .admin-login-card .form-group { text-align: left; margin-bottom: 14px; }
+    .admin-login-card label { font-size: 12px; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 5px; }
+    .admin-login-card input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s; }
+    .admin-login-card input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(14,65,89,.1); }
+    .admin-login-btn { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; margin-top: 8px; transition: opacity .15s; }
+    .admin-login-btn:hover { opacity: .88; }
+    .admin-login-error { color: var(--danger); font-size: 13px; margin-top: 12px; display: none; }
+
     /* ── Misc ── */
     .text-muted { color: var(--text-muted); }
     .mt-12 { margin-top: 12px; }
@@ -392,14 +425,136 @@
     .divider { height: 1px; background: var(--border); margin: 16px 0; }
     .section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
 
-    @media (max-width: 700px) {
-      nav.sidebar { display: none; }
+    /* ── Hamburger ── */
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px; height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: all .25s;
+    }
+
+    /* ── Sidebar overlay ── */
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 150;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    @media (max-width: 768px) {
+      /* Header */
+      header { padding: 0 16px; gap: 10px; }
+      header h1 { font-size: 13px; }
+      #cfgStatus { display: none; }
+      .hamburger { display: flex; }
+
+      /* Sidebar → drawer */
+      nav.sidebar {
+        position: fixed;
+        top: 56px; left: -220px;
+        height: calc(100vh - 56px);
+        z-index: 200;
+        transition: left .25s ease;
+        box-shadow: 4px 0 20px rgba(0,0,0,.15);
+      }
+      nav.sidebar.open { left: 0; }
+
+      /* Layout */
+      .layout { display: block; }
+      main { padding: 16px; }
+
+      /* Settings bar */
+      .settings-bar { flex-direction: column; align-items: stretch; padding: 12px 16px; gap: 8px; }
+      .settings-bar input { width: 100% !important; }
+
+      /* Cards */
+      .card { padding: 14px; }
+      .card-header { flex-wrap: wrap; gap: 8px; }
+      .card-header .btn-primary { width: 100%; justify-content: center; }
+
+      /* Forms */
       .form-grid { grid-template-columns: 1fr; }
-      .week-grid { grid-template-columns: repeat(4, 1fr); }
+      .form-grid.cols3 { grid-template-columns: 1fr; }
+
+      /* Week grid */
+      .week-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+      /* Tables */
+      th, td { padding: 8px 10px; font-size: 12px; }
+      .flex { flex-wrap: wrap; gap: 4px; }
+      .btn-sm { padding: 5px 8px; font-size: 11px; }
+
+      /* Calendar */
+      .cal-cell { font-size: 11px; }
+      .cal-day-name { font-size: 10px; padding: 4px 0; }
+
+      /* Modals */
+      .modal-backdrop { padding: 0; align-items: flex-end; }
+      .modal {
+        border-radius: 20px 20px 0 0;
+        max-height: 92vh;
+        max-width: 100%;
+      }
+
+      /* Booking filters */
+      .booking-filters { flex-direction: column; }
+      .booking-filters .form-group input,
+      .booking-filters select { width: 100%; }
+
+      /* Embed code */
+      .embed-box { font-size: 11px; }
+
+      /* Logo preview */
+      #logoPreviewWrap { display: none; }
+    }
+
+    @media (max-width: 400px) {
+      .week-grid { grid-template-columns: repeat(3, 1fr); }
+      .hr-slots-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
+
+<!-- ══ LOGIN ADMIN ══ -->
+<div id="adminLoginScreen">
+  <div class="admin-login-card">
+    <div class="admin-login-logo">
+      <svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="#0e4159"/>
+        <text x="16" y="22" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="14" fill="white">ST</text>
+        <text x="42" y="22" font-family="Inter,sans-serif" font-weight="700" font-size="15" fill="#0e4159">SavvyTech</text>
+      </svg>
+    </div>
+    <h1>Panel de Administración</h1>
+    <p>Acceso restringido</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input id="adminEmail" type="email" placeholder="admin@savvytechhotels.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input id="adminPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <button class="admin-login-btn" onclick="adminLogin()">Entrar</button>
+    <div class="admin-login-error" id="adminLoginError">Credenciales incorrectas</div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="adminApp">
 
 <!-- Settings bar -->
 <div class="settings-bar" id="settingsBar">
@@ -416,15 +571,22 @@
 </div>
 
 <header>
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
   <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><rect width="26" height="26" rx="6" fill="rgba(255,255,255,.15)"/><text x="13" y="18" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="11" fill="white">ST</text></svg>
   <h1>SavvyTech — Panel Admin</h1>
   <span id="cfgStatus">Sin configurar</span>
   <button class="btn-secondary btn-sm" onclick="toggleSettings()">Configuración</button>
+  <button class="btn-secondary btn-sm" onclick="adminLogout()" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff">Salir</button>
 </header>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <div class="layout">
   <!-- Sidebar -->
-  <nav class="sidebar">
+  <nav class="sidebar" id="sidebar">
     <button class="active" onclick="showTab('establecimientos', this)">🏨 Establecimientos</button>
     <button onclick="showTab('inventario', this)">📦 Inventario</button>
     <button onclick="showTab('reservas', this)">📅 Reservas</button>
@@ -745,20 +907,96 @@
   </div>
 </div>
 
+</div><!-- /adminApp -->
+
 <!-- Toast -->
 <div id="toast"></div>
 
 <script>
 // ══════════════════════════════════════
+// ADMIN AUTH — Edita esta lista para añadir/quitar administradores
+// Genera el hash de una contraseña nueva en: https://emn178.github.io/online-tools/sha256.html
+// ══════════════════════════════════════
+const ADMIN_USERS = [
+  { email: 'gonzalo@savvytechhotels.com', passwordHash: 'df07aadbf95ad06b4d5c7e48d82d6f4cdc5743fa4044efc111dee6fcdd249323' },
+  { email: 'yago@savvytechhotels.com',    passwordHash: 'd5b80f842977e2c5519717b1fb825cddec5d7685d7ab28652d1e1c8d229021a3' },
+  // Para añadir más admins: genera el hash en https://emn178.github.io/online-tools/sha256.html
+  // { email: 'otro@email.com', passwordHash: 'HASH_AQUI' },
+];
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function adminLogin() {
+  const email    = document.getElementById('adminEmail').value.trim().toLowerCase();
+  const password = document.getElementById('adminPassword').value;
+  const errEl    = document.getElementById('adminLoginError');
+  errEl.style.display = 'none';
+
+  if (!email || !password) {
+    errEl.textContent = 'Introduce email y contraseña';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const hash = await sha256(password);
+  const match = ADMIN_USERS.find(u => u.email.toLowerCase() === email && u.passwordHash === hash);
+
+  if (!match) {
+    errEl.textContent = 'Credenciales incorrectas';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  sessionStorage.setItem('adminAuth', JSON.stringify({ email: match.email, ts: Date.now() }));
+  showAdminApp();
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('adminAuth');
+  document.getElementById('adminApp').classList.remove('visible');
+  document.getElementById('adminLoginScreen').classList.add('visible');
+  document.getElementById('adminPassword').value = '';
+}
+
+function checkAdminAuth() {
+  const saved = sessionStorage.getItem('adminAuth');
+  if (saved) {
+    try {
+      const { ts } = JSON.parse(saved);
+      // Sesión válida por 8 horas
+      if (Date.now() - ts < 8 * 60 * 60 * 1000) { showAdminApp(); return; }
+    } catch {}
+  }
+  document.getElementById('adminLoginScreen').classList.add('visible');
+}
+
+function showAdminApp() {
+  document.getElementById('adminLoginScreen').classList.remove('visible');
+  document.getElementById('adminApp').classList.add('visible');
+  initApp();
+}
+
+// ══════════════════════════════════════
 // CONFIG & SUPABASE
 // ══════════════════════════════════════
+
+// ─── Credenciales por defecto (hardcodeadas) ───────────────────────────────
+// Si están definidas aquí, no hace falta configurar nada al entrar al admin.
+// Cámbialo si alguna vez rotas las claves en Supabase.
+const DEFAULT_SB_URL = 'https://ritjspwzwllptwqmeqwh.supabase.co';
+const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdGpzcHd6d2xscHR3cW1lcXdoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDI3MDkwNCwiZXhwIjoyMDg5ODQ2OTA0fQ.OWdzA9DKDBZ1co6_Wp6HAPUiLT45TJXhSehf7YCBk6M';
+// ───────────────────────────────────────────────────────────────────────────
+
 const CFG_URL_KEY = 'sb_url';
 const CFG_KEY_KEY = 'sb_key';
 
 function getCfg() {
   return {
-    url: localStorage.getItem(CFG_URL_KEY) || '',
-    key: localStorage.getItem(CFG_KEY_KEY) || ''
+    url: localStorage.getItem(CFG_URL_KEY) || DEFAULT_SB_URL,
+    key: localStorage.getItem(CFG_KEY_KEY) || DEFAULT_SB_KEY
   };
 }
 
@@ -814,6 +1052,20 @@ async function sbFetch(path, opts = {}) {
 }
 
 // ══════════════════════════════════════
+// SIDEBAR MOBILE
+// ══════════════════════════════════════
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('open', isOpen);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════
 // TABS
 // ══════════════════════════════════════
 function showTab(name, btn) {
@@ -823,6 +1075,7 @@ function showTab(name, btn) {
   if (btn) btn.classList.add('active');
   if (name === 'inventario') refreshInvEstSelect();
   if (name === 'reservas') { refreshBkEstSelect(); setDefaultDateRange(); }
+  closeSidebar();
 }
 
 // ══════════════════════════════════════
@@ -1447,7 +1700,8 @@ document.querySelectorAll('.modal-backdrop').forEach(bd => {
 function initApp() {
   updateCfgStatus();
   const { url, key } = getCfg();
-  if (url && key) {
+  const ready = url && key && url !== 'TU_SUPABASE_URL';
+  if (ready) {
     loadEstablishments();
   } else {
     document.getElementById('settingsBar').classList.add('open');
@@ -1455,7 +1709,7 @@ function initApp() {
   }
 }
 
-initApp();
+checkAdminAuth();
 </script>
 </body>
 </html>
