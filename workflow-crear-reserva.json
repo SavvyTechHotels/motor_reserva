@@ -1,0 +1,281 @@
+{
+  "name": "Hotel · Crear Reserva",
+  "nodes": [
+    {
+      "id": "wh_reserva",
+      "name": "POST /reservar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reservar",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "code_validate",
+      "name": "Validar Reserva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "// Los datos POST están en $json.body\nconst body = $json.body || {};\nconst { nombre, email, servicio, fecha, hora, personas } = body;\n\nconst errors = [];\n\n// Validar campos obligatorios\nif (!nombre || nombre.trim().length < 2) errors.push('nombre es requerido (mínimo 2 caracteres)');\nif (!email) errors.push('email es requerido');\n\n// Validar formato de email sin regex con $\nif (email) {\n  const parts = email.split('@');\n  const isValidEmail = parts.length === 2 && parts[0].length > 0 && parts[1].includes('.') && parts[1].split('.').pop().length >= 2;\n  if (!isValidEmail) errors.push('formato de email no válido');\n}\n\nif (!servicio || !['spa', 'restaurante'].includes(servicio.toLowerCase())) {\n  errors.push('servicio debe ser spa o restaurante');\n}\nif (!fecha || fecha.length !== 10 || fecha[4] !== '-' || fecha[7] !== '-') {\n  errors.push('fecha debe tener formato YYYY-MM-DD');\n}\nif (!hora || hora.length !== 5 || hora[2] !== ':') {\n  errors.push('hora debe tener formato HH:MM');\n}\n\nconst pax = parseInt(personas, 10);\nif (!personas || isNaN(pax) || pax < 1) {\n  errors.push('personas debe ser un número mayor a 0');\n}\n\nif (errors.length > 0) {\n  return [{ json: { ok: false, error: errors.join('. '), valid: false } }];\n}\n\n// Devolver datos limpios y normalizados\nreturn [{ json: {\n  nombre: nombre.trim(),\n  email: email.toLowerCase().trim(),\n  servicio: servicio.toLowerCase(),\n  fecha,\n  hora,\n  personas: pax,\n  valid: true\n} }];"
+      }
+    },
+    {
+      "id": "if_valid_res",
+      "name": "Datos OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [680, 300],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "at_search_slot",
+      "name": "Verificar Aforo del Slot",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [900, 180],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_TABLE_RESERVAS_ID"
+        },
+        "filterByFormula": "={{ \"AND({servicio}='\" + $('Validar Reserva').item.json.servicio + \"',{fecha}='\" + $('Validar Reserva').item.json.fecha + \"',{hora}='\" + $('Validar Reserva').item.json.hora + \"',{estado}='confirmada')\" }}"
+      }
+    },
+    {
+      "id": "code_aforo",
+      "name": "Calcular Aforo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 180],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Reservas actuales para este slot\nconst reservas = $input.all();\n\n// Datos de la nueva reserva\nconst data = $('Validar Reserva').first().json;\n\n// Aforo máximo según servicio\nconst aforo_max = data.servicio === 'spa' ? 4 : 20;\n\n// Calcular personas ya reservadas en este slot\nconst ocupado = reservas.reduce((sum, r) => {\n  return sum + (parseInt(r.json.personas, 10) || 1);\n}, 0);\n\n// ¿Caben las nuevas personas?\nconst disponible = (ocupado + data.personas) <= aforo_max;\n\nreturn [{ json: { ...data, ocupado, aforo_max, disponible } }];"
+      }
+    },
+    {
+      "id": "if_aforo",
+      "name": "Hay Aforo",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1340, 180],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.disponible }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "code_gen_id",
+      "name": "Generar ID y Email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 80],
+      "parameters": {
+        "jsCode": "const data = $json;\n\n// Generar ID único de confirmación\nconst confirmacion_id = 'RES-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();\n\n// Labels\nconst servicioLabel = data.servicio === 'spa' ? '🧘 Spa & Wellness' : '🍽️ Restaurante';\n\n// Formatear fecha para mostrar (YYYY-MM-DD → DD/MM/YYYY)\nconst fechaParts = data.fecha.split('-');\nconst fechaDisplay = fechaParts[2] + '/' + fechaParts[1] + '/' + fechaParts[0];\n\n// Plantilla HTML del email de confirmación\nconst emailHtml = `<!DOCTYPE html>\n<html lang=\"es\">\n<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head>\n<body style=\"font-family:Georgia,serif;background:#f5f3f0;margin:0;padding:20px\">\n  <div style=\"max-width:560px;margin:0 auto\">\n    <!-- Header -->\n    <div style=\"background:#1a1a2e;padding:32px 40px;text-align:center;border-radius:12px 12px 0 0\">\n      <div style=\"color:#d4af6a;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px\">Hotel Boutique</div>\n      <h1 style=\"color:#ffffff;font-size:20px;letter-spacing:1px;margin:0;font-weight:400\">Reserva Confirmada</h1>\n      <div style=\"width:40px;height:2px;background:#d4af6a;margin:16px auto 0\"></div>\n    </div>\n    <!-- Body -->\n    <div style=\"background:#ffffff;padding:36px 40px\">\n      <p style=\"color:#555;font-size:15px;line-height:1.7;margin:0 0 24px\">Estimado/a <strong style=\"color:#1a1a2e\">${data.nombre}</strong>,</p>\n      <p style=\"color:#555;font-size:15px;line-height:1.7;margin:0 0 28px\">Su reserva ha sido procesada con éxito. A continuación encontrará los detalles de su reserva:</p>\n      <!-- Detalles -->\n      <table style=\"width:100%;border-collapse:collapse;margin-bottom:28px\">\n        <tr style=\"border-bottom:1px solid #f0ede8\">\n          <td style=\"padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1.5px\">Servicio</td>\n          <td style=\"padding:12px 0;color:#1a1a2e;font-size:15px;font-weight:600;text-align:right\">${servicioLabel}</td>\n        </tr>\n        <tr style=\"border-bottom:1px solid #f0ede8\">\n          <td style=\"padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1.5px\">Fecha</td>\n          <td style=\"padding:12px 0;color:#1a1a2e;font-size:15px;font-weight:600;text-align:right\">${fechaDisplay}</td>\n        </tr>\n        <tr style=\"border-bottom:1px solid #f0ede8\">\n          <td style=\"padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1.5px\">Hora</td>\n          <td style=\"padding:12px 0;color:#1a1a2e;font-size:15px;font-weight:600;text-align:right\">${data.hora}</td>\n        </tr>\n        <tr>\n          <td style=\"padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1.5px\">Personas</td>\n          <td style=\"padding:12px 0;color:#1a1a2e;font-size:15px;font-weight:600;text-align:right\">${data.personas} ${data.personas === 1 ? 'persona' : 'personas'}</td>\n        </tr>\n      </table>\n      <!-- ID Confirmación -->\n      <div style=\"background:#f9f7f4;border-left:3px solid #d4af6a;padding:20px 24px;border-radius:0 8px 8px 0;margin-bottom:28px\">\n        <div style=\"color:#999;font-size:11px;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px\">Número de Confirmación</div>\n        <div style=\"color:#1a1a2e;font-size:20px;font-weight:700;letter-spacing:3px\">${confirmacion_id}</div>\n      </div>\n      <p style=\"color:#888;font-size:13px;line-height:1.7;margin:0\">Por favor, guarde este número de confirmación. Le agradecemos haber elegido nuestro establecimiento y esperamos poder atenderle pronto.</p>\n    </div>\n    <!-- Footer -->\n    <div style=\"background:#1a1a2e;padding:20px 40px;text-align:center;border-radius:0 0 12px 12px\">\n      <p style=\"color:#666;font-size:12px;margin:0;line-height:1.7\">Para modificaciones o cancelaciones, contacte con recepción con al menos 24 h de antelación.</p>\n    </div>\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { ...data, confirmacion_id, estado: 'confirmada', emailHtml } }];"
+      }
+    },
+    {
+      "id": "at_create",
+      "name": "Guardar en Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [1780, 80],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "mode": "id",
+          "value": "YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "mode": "id",
+          "value": "YOUR_TABLE_RESERVAS_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nombre": "={{ $json.nombre }}",
+            "email": "={{ $json.email }}",
+            "servicio": "={{ $json.servicio }}",
+            "fecha": "={{ $json.fecha }}",
+            "hora": "={{ $json.hora }}",
+            "personas": "={{ $json.personas }}",
+            "confirmacion_id": "={{ $json.confirmacion_id }}",
+            "estado": "confirmada"
+          },
+          "schema": []
+        }
+      }
+    },
+    {
+      "id": "gmail_send",
+      "name": "Enviar Email Confirmación",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [2000, 80],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $('Generar ID y Email HTML').item.json.email }}",
+        "subject": "={{ '✅ Reserva Confirmada — ' + $('Generar ID y Email HTML').item.json.confirmacion_id }}",
+        "emailType": "html",
+        "message": "={{ $('Generar ID y Email HTML').item.json.emailHtml }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "resp_success",
+      "name": "Responder Éxito",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [2220, 80],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, data: { confirmacion_id: $('Generar ID y Email HTML').item.json.confirmacion_id, servicio: $('Generar ID y Email HTML').item.json.servicio, fecha: $('Generar ID y Email HTML').item.json.fecha, hora: $('Generar ID y Email HTML').item.json.hora, personas: $('Generar ID y Email HTML').item.json.personas } }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "resp_full",
+      "name": "Responder Aforo Completo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1560, 320],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"ok\": false, \"error\": \"El horario seleccionado no tiene disponibilidad. Por favor elige otro.\"}",
+        "options": {
+          "responseCode": 409,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "resp_invalid",
+      "name": "Responder Datos Inválidos",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [900, 440],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: $json.error }) }}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "POST /reservar": {
+      "main": [
+        [{ "node": "Validar Reserva", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validar Reserva": {
+      "main": [
+        [{ "node": "Datos OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Datos OK": {
+      "main": [
+        [{ "node": "Verificar Aforo del Slot", "type": "main", "index": 0 }],
+        [{ "node": "Responder Datos Inválidos", "type": "main", "index": 0 }]
+      ]
+    },
+    "Verificar Aforo del Slot": {
+      "main": [
+        [{ "node": "Calcular Aforo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Calcular Aforo": {
+      "main": [
+        [{ "node": "Hay Aforo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Hay Aforo": {
+      "main": [
+        [{ "node": "Generar ID y Email HTML", "type": "main", "index": 0 }],
+        [{ "node": "Responder Aforo Completo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generar ID y Email HTML": {
+      "main": [
+        [{ "node": "Guardar en Airtable", "type": "main", "index": 0 }]
+      ]
+    },
+    "Guardar en Airtable": {
+      "main": [
+        [{ "node": "Enviar Email Confirmación", "type": "main", "index": 0 }]
+      ]
+    },
+    "Enviar Email Confirmación": {
+      "main": [
+        [{ "node": "Responder Éxito", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "_meta": {
+    "notes": [
+      "CONFIGURACIÓN REQUERIDA:",
+      "1. Reemplazar YOUR_AIRTABLE_BASE_ID y YOUR_TABLE_RESERVAS_ID en los 3 nodos de Airtable",
+      "2. Configurar credenciales de Airtable en n8n (Settings > Credentials > Airtable API)",
+      "3. Configurar credenciales de Gmail en n8n (Settings > Credentials > Gmail OAuth2)",
+      "4. La tabla 'Reservas' en Airtable debe tener: nombre, email, servicio, fecha, hora, personas, confirmacion_id, estado",
+      "LÓGICA ANTI-OVERBOOKING:",
+      "- Antes de confirmar, se verifica que (ocupacion_actual + nuevas_personas) <= aforo_maximo",
+      "- Spa: aforo máximo 4 personas por slot",
+      "- Restaurante: aforo máximo 20 personas por slot",
+      "EMAIL:",
+      "- Se envía email HTML de confirmación con ID único (ej: RES-LM1KZ2-4X9A)",
+      "- Para usar SMTP en lugar de Gmail: reemplazar el nodo 'Enviar Email Confirmación' por 'Send Email' con credenciales SMTP"
+    ]
+  }
+}
