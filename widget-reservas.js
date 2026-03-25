@@ -32,25 +32,25 @@
     .hr-widget {
       --hr-primary:   #0e4159;
       --hr-accent:    #0e4159;
-      --hr-secondary: #f6f3f1;
+      --hr-secondary: #f9f8f7;
       --hr-surface:   #ffffff;
-      --hr-text:      #1a2e3b;
-      --hr-muted:     #7a8fa0;
-      --hr-border:    #e4ddd6;
-      --hr-radius:    12px;
+      --hr-text:      #111827;
+      --hr-muted:     #9ca3af;
+      --hr-border:    #e5e7eb;
+      --hr-radius:    0px;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      max-width: 460px;
+      max-width: 420px;
       margin: 0 auto;
       background: var(--hr-surface);
-      border-radius: 20px;
-      box-shadow: 0 8px 40px rgba(14,65,89,.13);
+      border-radius: 0;
+      box-shadow: 0 2px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
       overflow: hidden;
     }
 
     /* ── Header ── */
     .hr-header {
       background: var(--hr-primary);
-      padding: 24px 28px 20px;
+      padding: 28px 32px 22px;
       color: #fff;
       position: relative;
     }
@@ -58,180 +58,175 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 6px;
+      margin-bottom: 16px;
     }
     .hr-logo-wrap {
-      width: 42px; height: 42px;
-      border-radius: 10px;
-      background: rgba(255,255,255,.15);
+      height: 30px;
+      max-width: 120px;
       display: flex;
       align-items: center;
-      justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
     }
-    .hr-logo { width: 100%; height: 100%; object-fit: cover; }
+    .hr-logo {
+      max-height: 100%;
+      max-width: 100%;
+      width: auto;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+      opacity: .9;
+      display: block;
+    }
     .hr-logo-placeholder {
-      font-size: 20px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.75);
       line-height: 1;
     }
     .hr-header h2 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: -.2px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: .1px;
     }
     .hr-header p {
-      font-size: .8rem;
-      opacity: .6;
-      margin-top: 2px;
+      font-size: .75rem;
+      opacity: .5;
+      margin-top: 3px;
       font-weight: 400;
+      letter-spacing: .2px;
     }
     .hr-tipo-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.18);
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: .75rem;
-      margin-bottom: 14px;
-      color: rgba(255,255,255,.85);
-      font-weight: 500;
+      display: none;
     }
     .hr-steps {
       display: flex;
-      gap: 5px;
+      gap: 3px;
     }
     .hr-step-dot {
       flex: 1;
-      height: 2px;
-      border-radius: 2px;
+      height: 1px;
       background: rgba(255,255,255,.2);
       transition: background .35s;
     }
-    .hr-step-dot.active { background: rgba(255,255,255,.9); }
+    .hr-step-dot.active { background: rgba(255,255,255,.8); }
 
     /* ── Body ── */
-    .hr-body { padding: 24px 28px 28px; background: var(--hr-secondary); }
+    .hr-body { padding: 28px 32px 32px; background: var(--hr-surface); }
 
     /* ── Labels / Fields ── */
     .hr-label {
       display: block;
-      font-size: .72rem;
+      font-size: .68rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: .7px;
+      letter-spacing: 1px;
       color: var(--hr-muted);
-      margin-bottom: 7px;
+      margin-bottom: 8px;
     }
-    .hr-field { margin-bottom: 16px; }
+    .hr-field { margin-bottom: 18px; }
     .hr-input {
       width: 100%;
-      padding: 11px 14px;
-      border: 1.5px solid var(--hr-border);
-      border-radius: var(--hr-radius);
+      padding: 11px 0;
+      border: none;
+      border-bottom: 1.5px solid var(--hr-border);
+      border-radius: 0;
       font-size: .93rem;
       font-family: inherit;
       color: var(--hr-text);
-      background: var(--hr-surface);
-      transition: border-color .2s, box-shadow .2s;
+      background: transparent;
+      transition: border-color .2s;
       outline: none;
       appearance: none;
     }
     .hr-input:focus {
-      border-color: var(--hr-primary);
-      box-shadow: 0 0 0 3px rgba(14,65,89,.1);
+      border-bottom-color: var(--hr-primary);
     }
 
     /* ── Slots ── */
     .hr-slots-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 6px;
+      margin-bottom: 24px;
     }
     .hr-slot {
-      border: 1.5px solid var(--hr-border);
-      border-radius: var(--hr-radius);
-      padding: 12px 6px;
+      border: 1px solid var(--hr-border);
+      border-radius: 0;
+      padding: 14px 6px;
       text-align: center;
       cursor: pointer;
-      transition: border-color .2s, background .2s, transform .15s, box-shadow .2s;
+      transition: border-color .15s, background .15s;
       background: var(--hr-surface);
     }
     .hr-slot:hover {
       border-color: var(--hr-primary);
-      background: var(--hr-surface);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(14,65,89,.12);
+      background: var(--hr-secondary);
     }
     .hr-slot.selected {
       border-color: var(--hr-primary);
       background: var(--hr-primary);
     }
     .hr-slot.selected .hora { color: #fff; }
-    .hr-slot.selected .plazas { color: rgba(255,255,255,.7); }
-    .hr-slot .hora { font-size: .92rem; font-weight: 700; color: var(--hr-text); }
-    .hr-slot .plazas { font-size: .7rem; color: var(--hr-muted); margin-top: 3px; }
+    .hr-slot.selected .plazas { color: rgba(255,255,255,.6); }
+    .hr-slot .hora { font-size: .9rem; font-weight: 600; color: var(--hr-text); letter-spacing: .2px; }
+    .hr-slot .plazas { font-size: .65rem; color: var(--hr-muted); margin-top: 4px; letter-spacing: .3px; }
     .hr-slot.pocas .plazas { color: #d97706; }
     .hr-empty {
       text-align: center;
-      padding: 28px 0;
+      padding: 32px 0;
       color: var(--hr-muted);
-      font-size: .88rem;
-      line-height: 1.6;
+      font-size: .85rem;
+      line-height: 1.7;
     }
 
     /* ── Botones ── */
     .hr-btn {
       width: 100%;
-      padding: 13px;
+      padding: 14px;
       background: var(--hr-primary);
       color: #fff;
       border: none;
-      border-radius: var(--hr-radius);
-      font-size: .95rem;
+      border-radius: 0;
+      font-size: .88rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      letter-spacing: .1px;
-      transition: opacity .2s, transform .15s, box-shadow .2s;
-      box-shadow: 0 4px 14px rgba(14,65,89,.25);
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      transition: opacity .2s;
     }
-    .hr-btn:hover:not(:disabled) {
-      opacity: .88;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(14,65,89,.3);
-    }
-    .hr-btn:active:not(:disabled) { transform: translateY(0); }
-    .hr-btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+    .hr-btn:hover:not(:disabled) { opacity: .85; }
+    .hr-btn:active:not(:disabled) { opacity: .95; }
+    .hr-btn:disabled { opacity: .3; cursor: not-allowed; }
 
     .hr-btn-back {
       background: none;
       border: none;
       color: var(--hr-muted);
-      font-size: .83rem;
+      font-size: .78rem;
       font-family: inherit;
       cursor: pointer;
-      margin-bottom: 18px;
+      margin-bottom: 22px;
       padding: 0;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
       transition: color .15s;
     }
     .hr-btn-back:hover { color: var(--hr-text); }
 
     /* ── Error ── */
     .hr-error {
-      background: #fff0f0;
-      border: 1px solid #fca5a5;
+      background: transparent;
+      border-left: 2px solid #ef4444;
       color: #b91c1c;
-      border-radius: var(--hr-radius);
-      padding: 10px 14px;
-      font-size: .84rem;
-      margin-bottom: 16px;
+      padding: 8px 12px;
+      font-size: .82rem;
+      margin-bottom: 18px;
     }
 
     /* ── Skeleton loaders ── */
@@ -240,19 +235,19 @@
       100% { background-position: 400px 0; }
     }
     .hr-skeleton {
-      border-radius: var(--hr-radius);
-      background: linear-gradient(90deg, #e8f0f5 25%, #d0e2ea 50%, #e8f0f5 75%);
+      border-radius: 0;
+      background: linear-gradient(90deg, #f3f4f6 25%, #e9eaec 50%, #f3f4f6 75%);
       background-size: 800px 100%;
       animation: hr-shimmer 1.4s infinite linear;
     }
     .hr-skeleton-slots {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 6px;
+      margin-bottom: 24px;
     }
-    .hr-skeleton-slot { height: 62px; border-radius: var(--hr-radius); }
-    .hr-skeleton-btn { height: 48px; border-radius: var(--hr-radius); margin-top: 4px; }
+    .hr-skeleton-slot { height: 60px; }
+    .hr-skeleton-btn { height: 48px; margin-top: 4px; }
 
     /* ── Loading spinner ── */
     .hr-loading {
@@ -264,8 +259,8 @@
     .hr-spinner {
       display: block;
       margin: 0 auto 10px;
-      width: 24px; height: 24px;
-      border: 2.5px solid rgba(14,65,89,.15);
+      width: 20px; height: 20px;
+      border: 1.5px solid rgba(0,0,0,.08);
       border-top-color: var(--hr-primary);
       border-radius: 50%;
       animation: hr-spin .7s linear infinite;
@@ -278,47 +273,49 @@
       padding: 8px 0 4px;
     }
     .hr-success-icon {
-      width: 58px; height: 58px;
-      background: rgba(14,65,89,.08);
-      border-radius: 50%;
+      width: 48px; height: 48px;
+      background: transparent;
+      border: 1.5px solid var(--hr-primary);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 16px;
-      font-size: 1.5rem;
+      margin: 0 auto 20px;
+      font-size: 1.2rem;
       color: var(--hr-primary);
     }
-    .hr-success h3 { font-size: 1.1rem; font-weight: 700; color: var(--hr-text); margin-bottom: 6px; }
-    .hr-success p { font-size: .85rem; color: var(--hr-muted); line-height: 1.55; }
+    .hr-success h3 { font-size: 1rem; font-weight: 600; color: var(--hr-text); margin-bottom: 6px; letter-spacing: .1px; }
+    .hr-success p { font-size: .83rem; color: var(--hr-muted); line-height: 1.6; }
 
     .hr-resumen {
-      background: var(--hr-surface);
-      border: 1px solid var(--hr-border);
-      border-radius: var(--hr-radius);
-      padding: 14px 16px;
-      margin: 18px 0;
+      background: var(--hr-secondary);
+      border: none;
+      border-top: 1px solid var(--hr-border);
+      border-bottom: 1px solid var(--hr-border);
+      padding: 16px 0;
+      margin: 20px 0;
       text-align: left;
     }
     .hr-resumen-row {
       display: flex;
       justify-content: space-between;
-      font-size: .85rem;
-      padding: 5px 0;
-      border-bottom: 1px solid var(--hr-border);
+      font-size: .83rem;
+      padding: 6px 16px;
     }
-    .hr-resumen-row:last-child { border-bottom: none; }
-    .hr-resumen-row span:first-child { color: var(--hr-muted); }
-    .hr-resumen-row span:last-child { font-weight: 600; color: var(--hr-text); }
+    .hr-resumen-row span:first-child { color: var(--hr-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .6px; }
+    .hr-resumen-row span:last-child { font-weight: 500; color: var(--hr-text); }
 
     .hr-nueva-reserva {
-      margin-top: 14px;
+      margin-top: 12px;
       background: none;
-      border: 1.5px solid var(--hr-border);
-      color: var(--hr-text);
-      border-radius: var(--hr-radius);
-      padding: 10px;
-      font-size: .86rem;
+      border: 1px solid var(--hr-border);
+      color: var(--hr-muted);
+      border-radius: 0;
+      padding: 11px;
+      font-size: .78rem;
       font-family: inherit;
+      font-weight: 600;
+      letter-spacing: .6px;
+      text-transform: uppercase;
       cursor: pointer;
       width: 100%;
       transition: border-color .2s, color .2s;
@@ -327,14 +324,14 @@
 
     /* ── Init states ── */
     .hr-init-loading {
-      padding: 48px 28px;
+      padding: 48px 32px;
       text-align: center;
       color: var(--hr-muted);
       font-size: .88rem;
       background: var(--hr-secondary);
     }
     .hr-init-error {
-      padding: 32px 28px;
+      padding: 32px 32px;
       text-align: center;
       color: #b91c1c;
       font-size: .86rem;
@@ -344,23 +341,23 @@
     /* ── Powered by ── */
     .hr-powered {
       text-align: center;
-      padding: 10px 0 4px;
-      font-size: .68rem;
+      padding: 16px 0 2px;
+      font-size: .62rem;
       color: var(--hr-muted);
-      opacity: .6;
-      letter-spacing: .3px;
+      opacity: .5;
+      letter-spacing: .8px;
+      text-transform: uppercase;
     }
 
     /* ── Responsive ── */
     @media (max-width: 500px) {
       .hr-widget {
         max-width: 100%;
-        border-radius: 0;
         box-shadow: none;
         min-height: 100vh;
       }
-      .hr-header { padding: 20px 20px 16px; }
-      .hr-body { padding: 20px 20px 24px; }
+      .hr-header { padding: 24px 24px 18px; }
+      .hr-body { padding: 24px 24px 28px; }
       .hr-slots-grid { grid-template-columns: repeat(3, 1fr); }
     }
   `;
@@ -453,8 +450,8 @@
     }[state.step];
 
     const logoHtml = config.logo_url
-      ? `<div class="hr-logo-wrap"><img class="hr-logo" src="${config.logo_url}" alt="${config.nombre}"></div>`
-      : `<div class="hr-logo-wrap"><span class="hr-logo-placeholder">${config.tipo === 'restaurante' ? '🍽' : '♨'}</span></div>`;
+      ? `<div class="hr-logo-wrap"><img class="hr-logo hr-logo-img" src="${config.logo_url}" alt=""></div>`
+      : `<div class="hr-logo-wrap"><span class="hr-logo-placeholder">${config.nombre || ''}</span></div>`;
 
     return `
       <div class="hr-header">
@@ -579,6 +576,13 @@
 
   /* ─── Eventos ────────────────────────────────────────────────────── */
   function attachEvents() {
+    const logoImg = container.querySelector('.hr-logo-img');
+    if (logoImg) {
+      logoImg.addEventListener('error', () => {
+        logoImg.parentElement.innerHTML = `<span class="hr-logo-placeholder">${config.nombre || ''}</span>`;
+      });
+    }
+
     const fechaInput = container.querySelector('#hr-fecha');
     if (fechaInput) {
       fechaInput.addEventListener('change', () => {
@@ -694,7 +698,7 @@
     container.innerHTML = `
       <div class="hr-header" style="background:#0e4159;padding:24px 28px 20px">
         <div class="hr-header-top" style="gap:14px;margin-bottom:6px">
-          <div class="hr-logo-wrap" style="background:rgba(255,255,255,.15)"></div>
+          <div class="hr-logo-wrap"></div>
           <div style="flex:1">
             <div class="hr-skeleton" style="height:16px;width:60%;border-radius:6px;margin-bottom:8px"></div>
             <div class="hr-skeleton" style="height:10px;width:40%;border-radius:4px;opacity:.6"></div>
