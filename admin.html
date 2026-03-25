@@ -220,6 +220,16 @@
     }
     .day-block input[type=time]:disabled { background: #f5f5f5; }
     .day-block label.closed { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; justify-content: center; }
+    .tramo-row { display: flex; align-items: center; gap: 3px; }
+    .tramo-row input[type=time] { flex: 1; min-width: 0; }
+    .tramo-row .tramo-sep { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+    .tramo-row .tramo-del { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 14px; padding: 0 1px; line-height: 1; flex-shrink: 0; }
+    .btn-add-tramo { font-size: 10px; padding: 3px 0; background: none; border: 1px dashed var(--border); border-radius: 5px; width: 100%; cursor: pointer; color: var(--text-muted); }
+    .btn-add-tramo:hover { border-color: var(--accent); color: var(--accent); }
+    /* Tramos para fecha específica */
+    .esp-tramo-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .esp-tramo-row input[type=time] { border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-size: 13px; flex: 1; }
+    .esp-tramo-row .tramo-del { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 18px; padding: 0 4px; }
 
     /* color swatch */
     .color-row { display: flex; align-items: center; gap: 8px; }
@@ -756,6 +766,7 @@
                 <th>Hora</th>
                 <th>Nombre</th>
                 <th>Email</th>
+                <th>Teléfono</th>
                 <th>Pers.</th>
                 <th>Establecimiento</th>
                 <th>Servicio</th>
@@ -1134,16 +1145,9 @@
           <button type="button" class="btn-secondary btn-sm" onclick="addSvcFecha()">+ Añadir fecha</button>
         </div>
         <div id="svcFechasList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
-        <div style="display:flex;gap:12px;align-items:center">
-          <div class="form-group" style="margin:0;flex:1">
-            <label>Hora inicio</label>
-            <input type="time" id="svcEspInicio" value="10:00" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
-          </div>
-          <div class="form-group" style="margin:0;flex:1">
-            <label>Hora fin</label>
-            <input type="time" id="svcEspFin" value="20:00" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
-          </div>
-        </div>
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">Turnos horarios</label>
+        <div id="svcEspTramos"></div>
+        <button type="button" class="btn-secondary btn-sm" onclick="addEspTramo()" style="margin-top:4px">+ Añadir turno</button>
       </div>
     </div>
     <div class="modal-footer">
@@ -1710,8 +1714,8 @@ function openServiceModal() {
   switchTipoHorario('semanal');
   _svcFechas = [];
   renderSvcFechas();
-  document.getElementById('svcEspInicio').value = '10:00';
-  document.getElementById('svcEspFin').value = '20:00';
+  _espTramos = [['10:00', '20:00']];
+  renderEspTramos();
   // Populate establishment select
   const sel = document.getElementById('svcEstId');
   sel.innerHTML = establishments.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
@@ -1745,8 +1749,9 @@ function editService(id) {
   if (tipo === 'especifico') {
     _svcFechas = h.fechas || [];
     renderSvcFechas();
-    document.getElementById('svcEspInicio').value = h.apertura || '10:00';
-    document.getElementById('svcEspFin').value = h.cierre || '20:00';
+    // Compatibilidad: si tiene apertura/cierre antiguo, convertir a tramos
+    _espTramos = h.tramos || (h.apertura ? [[h.apertura, h.cierre || '20:00']] : [['10:00', '20:00']]);
+    renderEspTramos();
   } else {
     _svcFechas = [];
     renderSvcFechas();
@@ -1757,19 +1762,58 @@ function editService(id) {
   openModal('svcModal');
 }
 
+// Normaliza el valor de un día a array de tramos [[ini,fin], ...]
+function normTramos(val) {
+  if (!val) return [['10:00', '20:00']];
+  if (Array.isArray(val[0])) return val;           // ya es [[ini,fin],...]
+  if (typeof val[0] === 'string') return [val];    // formato antiguo [ini,fin]
+  return [['10:00', '20:00']];
+}
+
+function tramoRowHtml(key, idx, ini, fin) {
+  return `<div class="tramo-row" id="tramo_${key}_${idx}">
+    <input type="time" value="${ini}">
+    <span class="tramo-sep">–</span>
+    <input type="time" value="${fin}">
+    <button type="button" class="tramo-del" onclick="removeTramo('${key}',${idx})">×</button>
+  </div>`;
+}
+
+function reindexTramos(key) {
+  document.getElementById('tramos_' + key).querySelectorAll('.tramo-row').forEach((row, idx) => {
+    row.id = `tramo_${key}_${idx}`;
+    row.querySelector('.tramo-del').setAttribute('onclick', `removeTramo('${key}',${idx})`);
+  });
+}
+
+function addTramo(key) {
+  const c = document.getElementById('tramos_' + key);
+  const idx = c.querySelectorAll('.tramo-row').length;
+  c.insertAdjacentHTML('beforeend', tramoRowHtml(key, idx, '20:00', '23:00'));
+}
+
+function removeTramo(key, idx) {
+  const c = document.getElementById('tramos_' + key);
+  const rows = c.querySelectorAll('.tramo-row');
+  if (rows.length <= 1) return;
+  rows[idx].remove();
+  reindexTramos(key);
+}
+
 function buildSvcWeekGrid(horario = {}) {
   const grid = document.getElementById('svcWeekGrid');
   grid.innerHTML = DAYS.map((day, i) => {
     const key = DAY_KEYS[i];
-    const h = horario[key] || null;
-    const closed = !h;
-    const apertura = h ? (Array.isArray(h) ? h[0] : h.apertura) : '10:00';
-    const cierre   = h ? (Array.isArray(h) ? h[1] : h.cierre)   : '20:00';
+    const raw = horario[key] || null;
+    const closed = !raw;
+    const tramos = normTramos(raw);
     return `
     <div class="day-block">
       <div class="day-name">${day.slice(0,3)}</div>
-      <input type="time" id="svc_${key}_open" value="${apertura}" ${closed ? 'disabled' : ''}>
-      <input type="time" id="svc_${key}_close" value="${cierre}" ${closed ? 'disabled' : ''}>
+      <div id="tramos_${key}" ${closed ? 'style="display:none"' : ''}>
+        ${tramos.map((t, idx) => tramoRowHtml(key, idx, t[0], t[1])).join('')}
+      </div>
+      <button type="button" class="btn-add-tramo" id="addtramo_${key}" ${closed ? 'style="display:none"' : ''} onclick="addTramo('${key}')">+ turno</button>
       <label class="closed">
         <input type="checkbox" id="svc_${key}_closed" ${closed ? 'checked' : ''} onchange="toggleSvcDayClosed('${key}',this.checked)">
         Heredar
@@ -1779,22 +1823,58 @@ function buildSvcWeekGrid(horario = {}) {
 }
 
 function toggleSvcDayClosed(key, isClosed) {
-  document.getElementById('svc_' + key + '_open').disabled = isClosed;
-  document.getElementById('svc_' + key + '_close').disabled = isClosed;
+  document.getElementById('tramos_' + key).style.display = isClosed ? 'none' : '';
+  document.getElementById('addtramo_' + key).style.display = isClosed ? 'none' : '';
 }
 
 function getSvcHorarioFromForm() {
   const h = {};
   DAY_KEYS.forEach(key => {
-    const closed = document.getElementById('svc_' + key + '_closed').checked;
-    if (!closed) {
-      h[key] = [
-        document.getElementById('svc_' + key + '_open').value,
-        document.getElementById('svc_' + key + '_close').value
-      ];
-    }
+    if (document.getElementById('svc_' + key + '_closed').checked) return;
+    const rows = document.getElementById('tramos_' + key).querySelectorAll('.tramo-row');
+    const tramos = [];
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input[type=time]');
+      if (inputs[0].value && inputs[1].value) tramos.push([inputs[0].value, inputs[1].value]);
+    });
+    if (tramos.length) h[key] = tramos;
   });
   return Object.keys(h).length ? h : null;
+}
+
+// ── Tramos para fechas específicas ──
+let _espTramos = [['10:00', '20:00']];
+
+function espTramoRowHtml(idx, ini, fin) {
+  return `<div class="esp-tramo-row" id="esptramo_${idx}">
+    <input type="time" value="${ini}">
+    <span style="color:var(--text-muted)">–</span>
+    <input type="time" value="${fin}">
+    <button type="button" class="tramo-del" onclick="removeEspTramo(${idx})">×</button>
+  </div>`;
+}
+
+function renderEspTramos() {
+  const c = document.getElementById('svcEspTramos');
+  c.innerHTML = _espTramos.map((t, i) => espTramoRowHtml(i, t[0], t[1])).join('');
+}
+
+function addEspTramo() {
+  _espTramos.push(['20:00', '23:00']);
+  renderEspTramos();
+}
+
+function removeEspTramo(idx) {
+  if (_espTramos.length <= 1) return;
+  _espTramos.splice(idx, 1);
+  renderEspTramos();
+}
+
+function getEspTramosFromForm() {
+  return Array.from(document.getElementById('svcEspTramos').querySelectorAll('.esp-tramo-row')).map(row => {
+    const inputs = row.querySelectorAll('input[type=time]');
+    return [inputs[0].value, inputs[1].value];
+  }).filter(t => t[0] && t[1]);
 }
 
 function buildSvcHorarioPayload() {
@@ -1802,10 +1882,9 @@ function buildSvcHorarioPayload() {
   if (tipo === 'especifico') {
     return {
       horario: {
-        tipo: 'especifico',
-        apertura: document.getElementById('svcEspInicio').value,
-        cierre:   document.getElementById('svcEspFin').value,
-        fechas:   [..._svcFechas],
+        tipo:   'especifico',
+        fechas: [..._svcFechas],
+        tramos: getEspTramosFromForm(),
       },
     };
   }
@@ -2152,30 +2231,31 @@ function buildSlotHoraOptions(svcId, dateStr, selectEl) {
 function generateServiceSlots(svc, dateStr) {
   if (!svc || !svc.horario) return [];
   const h = svc.horario;
-  let startStr, endStr;
+  let tramos = [];
   if (h.tipo === 'especifico') {
     if (!(h.fechas || []).includes(dateStr)) return [];
-    startStr = h.apertura;
-    endStr   = h.cierre;
+    tramos = h.tramos || (h.apertura ? [[h.apertura, h.cierre]] : []);
   } else {
     const dayMap = ['dom','lun','mar','mie','jue','vie','sab'];
     const d = new Date(dateStr + 'T12:00:00Z');
     const dayKey = dayMap[d.getUTCDay()];
-    const horario = h[dayKey];
-    if (!horario) return [];
-    [startStr, endStr] = horario;
+    const raw = h[dayKey];
+    if (!raw) return [];
+    tramos = Array.isArray(raw[0]) ? raw : [raw];
   }
-  const [sh, sm] = startStr.split(':').map(Number);
-  const [eh, em] = endStr.split(':').map(Number);
   const interval = svc.intervalo_min || 60;
   const slots = [];
-  let cur = sh * 60 + sm;
-  const end = eh * 60 + em;
-  while (cur < end) {
-    const hh = String(Math.floor(cur / 60)).padStart(2, '0');
-    const mm = String(cur % 60).padStart(2, '0');
-    slots.push(hh + ':' + mm + ':00');
-    cur += interval;
+  for (const [startStr, endStr] of tramos) {
+    const [sh, sm] = startStr.split(':').map(Number);
+    const [eh, em] = endStr.split(':').map(Number);
+    let cur = sh * 60 + sm;
+    const end = eh * 60 + em;
+    while (cur < end) {
+      const hh = String(Math.floor(cur / 60)).padStart(2, '0');
+      const mm = String(cur % 60).padStart(2, '0');
+      slots.push(hh + ':' + mm + ':00');
+      cur += interval;
+    }
   }
   return slots;
 }
@@ -2298,6 +2378,7 @@ function renderReservasTable() {
       <td>${b.hora ? b.hora.slice(0,5) : '—'}</td>
       <td>${b.nombre}</td>
       <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
+      <td>${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
       <td style="text-align:center">${b.personas}</td>
       <td>${b.establishments ? b.establishments.nombre : (b.establishment_id ? b.establishment_id.slice(0,8)+'…' : '—')}</td>
       <td>${b.services ? b.services.nombre : '—'}</td>

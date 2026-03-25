@@ -378,6 +378,7 @@
       confirmacion: null,
       nombre: '',
       email: '',
+      telefono: '',
       personas: 1,
     };
   }
@@ -550,6 +551,10 @@
         <input class="hr-input" type="email" id="hr-email" placeholder="maria@email.com" value="${state.email || ''}">
       </div>
       <div class="hr-field">
+        <label class="hr-label">Teléfono</label>
+        <input class="hr-input" type="tel" id="hr-telefono" placeholder="+34 600 000 000" value="${state.telefono || ''}">
+      </div>
+      <div class="hr-field">
         <label class="hr-label">Número de personas</label>
         <select class="hr-input" id="hr-personas">
           ${Array.from({ length: maxPersonas }, (_, i) => i + 1)
@@ -578,6 +583,7 @@
           <div class="hr-resumen-row"><span>Hora</span><span>${formatHora(state.hora)}</span></div>
           <div class="hr-resumen-row"><span>Personas</span><span>${state.personas}</span></div>
           <div class="hr-resumen-row"><span>Nombre</span><span>${state.nombre}</span></div>
+          ${state.telefono ? `<div class="hr-resumen-row"><span>Teléfono</span><span>${state.telefono}</span></div>` : ''}
         </div>
         <button class="hr-nueva-reserva" id="hr-nueva-reserva">Hacer otra reserva</button>
       </div>
@@ -653,24 +659,27 @@
   }
 
   async function submitReserva() {
-    const nombre   = container.querySelector('#hr-nombre').value.trim();
-    const email    = container.querySelector('#hr-email').value.trim();
-    const personas = parseInt(container.querySelector('#hr-personas').value, 10);
+    const nombre    = container.querySelector('#hr-nombre').value.trim();
+    const email     = container.querySelector('#hr-email').value.trim();
+    const telefono  = container.querySelector('#hr-telefono').value.trim();
+    const personas  = parseInt(container.querySelector('#hr-personas').value, 10);
 
     if (!nombre) { state.error = 'El nombre es obligatorio'; render(); return; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       state.error = 'Introduce un email válido'; render(); return;
     }
+    if (!telefono) { state.error = 'El teléfono es obligatorio'; render(); return; }
 
-    state.nombre   = nombre;
-    state.email    = email;
-    state.personas = personas;
-    state.loading  = true;
-    state.error    = null;
+    state.nombre    = nombre;
+    state.email     = email;
+    state.telefono  = telefono;
+    state.personas  = personas;
+    state.loading   = true;
+    state.error     = null;
     render();
 
     try {
-      await postReserva({ nombre, email, fecha: state.fecha, hora: state.hora, personas });
+      await postReserva({ nombre, email, telefono, fecha: state.fecha, hora: state.hora, personas });
       state.step = 4;
     } catch (e) {
       state.error = e.message;

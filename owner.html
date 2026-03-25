@@ -136,6 +136,12 @@
     .day-block input[type=time] { border: 1px solid var(--border); border-radius: 5px; padding: 4px 5px; font-size: 11px; width: 100%; }
     .day-block input[type=time]:disabled { background: #f5f5f5; }
     .day-block label.closed { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; justify-content: center; }
+    .tramo-row { display: flex; align-items: center; gap: 3px; }
+    .tramo-row input[type=time] { flex: 1; min-width: 0; }
+    .tramo-row .tramo-sep { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+    .tramo-row .tramo-del { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 14px; padding: 0 1px; line-height: 1; flex-shrink: 0; }
+    .btn-add-tramo { font-size: 10px; padding: 3px 0; background: none; border: 1px dashed var(--border); border-radius: 5px; width: 100%; cursor: pointer; color: var(--text-muted); }
+    .btn-add-tramo:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ── Table ── */
     .table-wrap { overflow-x: auto; }
@@ -537,7 +543,7 @@
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Fecha</th><th>Hora</th><th>Nombre</th><th>Email</th><th>Pers.</th><th>Servicio</th><th>Estado</th><th></th></tr>
+                <tr><th>Fecha</th><th>Hora</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Pers.</th><th>Servicio</th><th>Estado</th><th></th></tr>
               </thead>
               <tbody id="ownerBkTbody">
                 <tr><td colspan="8"><div class="empty-state"><p>Selecciona un rango de fechas</p></div></td></tr>
@@ -891,19 +897,57 @@ function loadConfigForm() {
   buildOwnerWeekGrid(estData.horario || {});
 }
 
+function owNormTramos(val) {
+  if (!val) return [['10:00', '20:00']];
+  if (Array.isArray(val[0])) return val;        // ya es [[ini,fin],...]
+  if (typeof val[0] === 'string') return [val]; // formato antiguo [ini,fin]
+  return [['10:00', '20:00']];
+}
+
+function owTramoRowHtml(key, idx, ini, fin) {
+  return `<div class="tramo-row" id="owtramo_${key}_${idx}">
+    <input type="time" value="${ini}">
+    <span class="tramo-sep">–</span>
+    <input type="time" value="${fin}">
+    <button type="button" class="tramo-del" onclick="owRemoveTramo('${key}',${idx})">×</button>
+  </div>`;
+}
+
+function owReindexTramos(key) {
+  document.getElementById('owtramos_' + key).querySelectorAll('.tramo-row').forEach((row, idx) => {
+    row.id = `owtramo_${key}_${idx}`;
+    row.querySelector('.tramo-del').setAttribute('onclick', `owRemoveTramo('${key}',${idx})`);
+  });
+}
+
+function owAddTramo(key) {
+  const c = document.getElementById('owtramos_' + key);
+  const idx = c.querySelectorAll('.tramo-row').length;
+  c.insertAdjacentHTML('beforeend', owTramoRowHtml(key, idx, '20:00', '23:00'));
+}
+
+function owRemoveTramo(key, idx) {
+  const c = document.getElementById('owtramos_' + key);
+  const rows = c.querySelectorAll('.tramo-row');
+  if (rows.length <= 1) return;
+  rows[idx].remove();
+  owReindexTramos(key);
+}
+
 function buildOwnerWeekGrid(horario = {}) {
   const grid = document.getElementById('ownerWeekGrid');
   grid.innerHTML = DAYS_LABEL.map((day, i) => {
     const key = DAY_KEYS[i];
-    const h = horario[key] || null;
-    const closed = !h;
-    const apertura = h ? (Array.isArray(h) ? h[0] : h.apertura) : '10:00';
-    const cierre   = h ? (Array.isArray(h) ? h[1] : h.cierre)   : '20:00';
+    const raw = horario[key] || null;
+    const closed = !raw;
+    const tramos = owNormTramos(raw);
     return `
     <div class="day-block">
       <div class="day-name">${day.slice(0,3)}</div>
-      <input type="time" id="ow_${key}_open" value="${apertura}" ${closed ? 'disabled' : ''}>
-      <input type="time" id="ow_${key}_close" value="${cierre}" ${closed ? 'disabled' : ''}>
+      <div id="owtramos_${key}" ${closed ? 'style="display:none"' : ''}>
+        ${tramos.map((t, idx) => owTramoRowHtml(key, idx, t[0], t[1])).join('')}
+      </div>
+      <button type="button" class="btn-add-tramo" id="owaddtramo_${key}" ${closed ? 'style="display:none"' : ''} onclick="owAddTramo('${key}')">+ turno</button>
       <label class="closed">
         <input type="checkbox" id="ow_${key}_closed" ${closed ? 'checked' : ''} onchange="owToggleDay('${key}',this.checked)">
         Cerrado
@@ -913,18 +957,23 @@ function buildOwnerWeekGrid(horario = {}) {
 }
 
 function owToggleDay(key, isClosed) {
-  document.getElementById('ow_' + key + '_open').disabled = isClosed;
-  document.getElementById('ow_' + key + '_close').disabled = isClosed;
+  const tramosDiv = document.getElementById('owtramos_' + key);
+  const addBtn    = document.getElementById('owaddtramo_' + key);
+  tramosDiv.style.display = isClosed ? 'none' : '';
+  addBtn.style.display    = isClosed ? 'none' : '';
 }
 
 function getOwnerHorario() {
   const h = {};
   DAY_KEYS.forEach(key => {
     if (!document.getElementById('ow_' + key + '_closed').checked) {
-      h[key] = [
-        document.getElementById('ow_' + key + '_open').value,
-        document.getElementById('ow_' + key + '_close').value
-      ];
+      const rows = document.getElementById('owtramos_' + key).querySelectorAll('.tramo-row');
+      const tramos = [];
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll('input[type=time]');
+        if (inputs[0].value && inputs[1].value) tramos.push([inputs[0].value, inputs[1].value]);
+      });
+      if (tramos.length) h[key] = tramos.length === 1 ? tramos[0] : tramos;
     }
   });
   return h;
@@ -1121,30 +1170,31 @@ function renderOwnerDaySlots(dateStr) {
 function generateServiceSlots(svc, dateStr) {
   if (!svc || !svc.horario) return [];
   const h = svc.horario;
-  let startStr, endStr;
+  let tramos = [];
   if (h.tipo === 'especifico') {
     if (!(h.fechas || []).includes(dateStr)) return [];
-    startStr = h.apertura;
-    endStr   = h.cierre;
+    tramos = h.tramos || (h.apertura ? [[h.apertura, h.cierre]] : []);
   } else {
     const dayMap = ['dom','lun','mar','mie','jue','vie','sab'];
     const d = new Date(dateStr + 'T12:00:00Z');
     const dayKey = dayMap[d.getUTCDay()];
-    const horario = h[dayKey];
-    if (!horario) return [];
-    [startStr, endStr] = horario;
+    const raw = h[dayKey];
+    if (!raw) return [];
+    tramos = Array.isArray(raw[0]) ? raw : [raw];
   }
-  const [sh, sm] = startStr.split(':').map(Number);
-  const [eh, em] = endStr.split(':').map(Number);
   const interval = svc.intervalo_min || 60;
   const slots = [];
-  let cur = sh * 60 + sm;
-  const end = eh * 60 + em;
-  while (cur < end) {
-    const hh = String(Math.floor(cur / 60)).padStart(2, '0');
-    const mm = String(cur % 60).padStart(2, '0');
-    slots.push(hh + ':' + mm + ':00');
-    cur += interval;
+  for (const [startStr, endStr] of tramos) {
+    const [sh, sm] = startStr.split(':').map(Number);
+    const [eh, em] = endStr.split(':').map(Number);
+    let cur = sh * 60 + sm;
+    const end = eh * 60 + em;
+    while (cur < end) {
+      const hh = String(Math.floor(cur / 60)).padStart(2, '0');
+      const mm = String(cur % 60).padStart(2, '0');
+      slots.push(hh + ':' + mm + ':00');
+      cur += interval;
+    }
   }
   return slots;
 }
@@ -1239,6 +1289,7 @@ function renderOwnerBkTable() {
       <td>${b.hora ? b.hora.slice(0,5) : '—'}</td>
       <td>${b.nombre}</td>
       <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
+      <td>${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
       <td style="text-align:center">${b.personas}</td>
       <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${colors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
