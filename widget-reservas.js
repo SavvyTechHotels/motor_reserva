@@ -150,14 +150,20 @@
     /* ── Slots ── */
     .hr-slots-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
       margin-bottom: 24px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 2px;
     }
+    .hr-slots-grid::-webkit-scrollbar { width: 3px; }
+    .hr-slots-grid::-webkit-scrollbar-track { background: transparent; }
+    .hr-slots-grid::-webkit-scrollbar-thumb { background: var(--hr-border); border-radius: 2px; }
     .hr-slot {
       border: 1px solid var(--hr-border);
       border-radius: 0;
-      padding: 14px 6px;
+      padding: 8px 4px;
       text-align: center;
       cursor: pointer;
       transition: border-color .15s, background .15s;
@@ -173,9 +179,25 @@
     }
     .hr-slot.selected .hora { color: #fff; }
     .hr-slot.selected .plazas { color: rgba(255,255,255,.6); }
-    .hr-slot .hora { font-size: .9rem; font-weight: 600; color: var(--hr-text); letter-spacing: .2px; }
-    .hr-slot .plazas { font-size: .65rem; color: var(--hr-muted); margin-top: 4px; letter-spacing: .3px; }
+    .hr-slot .hora { font-size: .8rem; font-weight: 600; color: var(--hr-text); letter-spacing: .1px; }
+    .hr-slot .plazas { font-size: .58rem; color: var(--hr-muted); margin-top: 2px; letter-spacing: .2px; }
     .hr-slot.pocas .plazas { color: #d97706; }
+    .hr-slot .casi-lleno-badge {
+      display: inline-block;
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: #d97706;
+      background: #fef3c7;
+      border-radius: 2px;
+      padding: 1px 3px;
+      margin-top: 2px;
+    }
+    .hr-slot.selected .casi-lleno-badge {
+      background: rgba(255,255,255,.2);
+      color: #fde68a;
+    }
     .hr-empty {
       text-align: center;
       padding: 32px 0;
@@ -245,11 +267,11 @@
     }
     .hr-skeleton-slots {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
       margin-bottom: 24px;
     }
-    .hr-skeleton-slot { height: 60px; }
+    .hr-skeleton-slot { height: 44px; }
     .hr-skeleton-btn { height: 48px; margin-top: 4px; }
 
     /* ── Loading spinner ── */
@@ -361,7 +383,7 @@
       }
       .hr-header { padding: 24px 24px 18px; }
       .hr-body { padding: 24px 24px 28px; }
-      .hr-slots-grid { grid-template-columns: repeat(3, 1fr); }
+      .hr-slots-grid { grid-template-columns: repeat(4, 1fr); }
     }
   `;
 
@@ -506,7 +528,7 @@
 
   function buildStep2() {
     if (state.loading) {
-      const skeletons = Array(6).fill(`<div class="hr-skeleton hr-skeleton-slot"></div>`).join('');
+      const skeletons = Array(8).fill(`<div class="hr-skeleton hr-skeleton-slot"></div>`).join('');
       return `
         <div class="hr-skeleton-slots">${skeletons}</div>
         <div class="hr-skeleton hr-skeleton-btn"></div>
@@ -522,12 +544,14 @@
       `;
     }
     const cards = state.slots.map(s => {
-      const pocas = s.plazas_libres <= 2;
+      const casiLleno = s.casi_lleno;
+      const pocas = casiLleno || s.plazas_libres <= 2;
       return `
         <div class="hr-slot ${state.hora === s.hora ? 'selected' : ''} ${pocas ? 'pocas' : ''}"
              data-hora="${s.hora}" data-plazas="${s.plazas_libres}">
           <div class="hora">${formatHora(s.hora)}</div>
-          <div class="plazas">${pocas ? '¡Solo ' + s.plazas_libres + '!' : s.plazas_libres + ' plazas'}</div>
+          <div class="plazas">${s.plazas_libres} plaza${s.plazas_libres !== 1 ? 's' : ''}</div>
+          ${casiLleno ? '<div class="casi-lleno-badge">Casi lleno</div>' : ''}
         </div>`;
     }).join('');
     return `

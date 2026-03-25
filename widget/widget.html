@@ -317,16 +317,42 @@
     }
 
     .hrw-slot-btn {
-      padding: 12px 6px;
+      padding: 10px 6px;
       border: 1.5px solid var(--hrw-border);
       border-radius: var(--hrw-radius-sm);
       background: var(--hrw-white);
       font-size: 14px;
+      font-weight: 600;
       font-family: var(--hrw-font-sans);
       color: var(--hrw-text);
       cursor: pointer;
       transition: var(--hrw-transition);
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .hrw-slot-plazas {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--hrw-text-muted);
+    }
+
+    .hrw-slot-badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: #92400e;
+      background: #fef3c7;
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+
+    .hrw-slot-btn.is-casi-lleno {
+      border-color: #f59e0b;
     }
 
     .hrw-slot-btn:hover {
@@ -338,6 +364,12 @@
       border-color: var(--hrw-accent);
       background: var(--hrw-primary);
       color: var(--hrw-white);
+    }
+
+    .hrw-slot-btn.is-selected .hrw-slot-plazas,
+    .hrw-slot-btn.is-selected .hrw-slot-badge {
+      color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.15);
     }
 
     .hrw-slots-empty {
@@ -816,6 +848,20 @@
           </div>
 
           <div class="hrw-form-row">
+            <label class="hrw-form-label" for="hrwTelefono">
+              Teléfono <span class="required">*</span>
+            </label>
+            <input
+              type="tel"
+              id="hrwTelefono"
+              class="hrw-form-input"
+              placeholder="+34 600 000 000"
+              oninput="HRW.clearFieldError('hrwTelefono')"
+            />
+            <div class="hrw-form-error" id="hrwTelefonoError">El teléfono es obligatorio.</div>
+          </div>
+
+          <div class="hrw-form-row">
             <label class="hrw-form-label" for="hrwPersonas">
               Número de personas <span class="required">*</span>
             </label>
@@ -876,29 +922,44 @@
        ============================================================ -->
   <script>
   /*!
-   * Hotel Reservation Widget v1.0
-   * Configura las URLs de tus webhooks de n8n en HRW.config
+   * Hotel Reservation Widget v2.0 — SavvyTech Hotels
+   * Conectado al sistema de time-blocking con service_id
    */
   const HRW = (() => {
 
     // ─── CONFIGURACIÓN ──────────────────────────────────────────
     const config = {
-      // ⚠️ Reemplaza con la URL base de tu instancia n8n
-      apiBase: 'https://TU-N8N.app.n8n.cloud/webhook',
-      // O para n8n self-hosted: 'https://tu-dominio.com/webhook'
+      apiBase: 'https://vmi3024621.contaboserver.net/webhook',
 
       endpoints: {
         disponibilidad: '/disponibilidad',
-        reservar:       '/reservar'
+        reservar:       '/reserva'        // endpoint correcto del sistema
+      },
+
+      // ⚠️ Mapea cada servicio a su service_id de Supabase.
+      // Encuéntralos en el panel Admin > Servicios (columna ID/Slug).
+      services: {
+        spa: {
+          id:    'REEMPLAZA-CON-UUID-DEL-SERVICIO-SPA',
+          label: 'Spa & Wellness',
+          icon:  '🧘'
+        },
+        restaurante: {
+          id:    'REEMPLAZA-CON-UUID-DEL-SERVICIO-RESTAURANTE',
+          label: 'Restaurante Gastronómico',
+          icon:  '🍽️'
+        }
       }
     };
 
     // ─── ESTADO ─────────────────────────────────────────────────
     const state = {
       currentStep: 1,
-      servicio:    null,
+      servicio:    null,   // clave del mapa config.services
+      service_id:  null,   // UUID real de Supabase
       fecha:       null,
       hora:        null,
+      plazas_libres: null,
       slots:       []
     };
 
@@ -953,9 +1014,13 @@
 
     // ─── STEP 1: SELECCIONAR SERVICIO ───────────────────────────
     function selectService(servicio) {
-      state.servicio = servicio;
-      state.hora = null;
-      state.slots = [];
+      const svcCfg = config.services[servicio];
+      if (!svcCfg) return;
+
+      state.servicio   = servicio;
+      state.service_id = svcCfg.id;
+      state.hora       = null;
+      state.slots      = [];
 
       document.querySelectorAll('.hrw-service-card').forEach(el => {
         el.classList.toggle('is-selected', el.dataset.service === servicio);
@@ -988,7 +1053,6 @@
       const infoEl    = $('hrwSlotsInfo');
       $('hrwBtnStep3').disabled = true;
 
-      // Loading state
       container.innerHTML = `
         <div class="hrw-slots-loading">
           <div class="hrw-spinner"></div>
@@ -997,8 +1061,9 @@
       infoEl.style.display = 'none';
 
       try {
+        // Usa service_id (UUID) en vez de nombre genérico
         const url = config.apiBase + config.endpoints.disponibilidad
-          + `?servicio=${encodeURIComponent(state.servicio)}&fecha=${encodeURIComponent(state.fecha)}`;
+          + `?service_id=${encodeURIComponent(state.service_id)}&fecha=${encodeURIComponent(state.fecha)}`;
 
         const res  = await fetch(url);
         const data = await res.json();
@@ -1010,8 +1075,8 @@
         state.slots = data.data;
         renderSlots(data.data);
 
-        // Info bar
-        const servicioLabel = state.servicio === 'spa' ? '🧘 Spa' : '🍽️ Restaurante';
+        const svcCfg = config.services[state.servicio] || {};
+        const servicioLabel = `${svcCfg.icon || ''} ${svcCfg.label || state.servicio}`;
         infoEl.innerHTML = `${servicioLabel} · ${formatDate(state.fecha)} · ${data.data.length} horario${data.data.length !== 1 ? 's' : ''} disponible${data.data.length !== 1 ? 's' : ''}`;
         infoEl.style.display = 'flex';
 
@@ -1039,11 +1104,15 @@
       const grid = document.createElement('div');
       grid.className = 'hrw-slots-grid';
 
-      slots.forEach(hora => {
+      // Los slots ahora son objetos: { hora, plazas_libres, casi_lleno }
+      slots.forEach(slot => {
+        const horaCorta = slot.hora ? slot.hora.slice(0, 5) : slot;
         const btn = document.createElement('button');
-        btn.className = 'hrw-slot-btn';
-        btn.textContent = hora;
-        btn.onclick = () => selectSlot(hora, btn);
+        btn.className = 'hrw-slot-btn' + (slot.casi_lleno ? ' is-casi-lleno' : '');
+        btn.innerHTML = horaCorta
+          + (slot.plazas_libres != null ? `<span class="hrw-slot-plazas">${slot.plazas_libres} pl.</span>` : '')
+          + (slot.casi_lleno ? `<span class="hrw-slot-badge">Casi lleno</span>` : '');
+        btn.onclick = () => selectSlot(slot, btn);
         grid.appendChild(btn);
       });
 
@@ -1051,8 +1120,10 @@
       container.appendChild(grid);
     }
 
-    function selectSlot(hora, btnEl) {
-      state.hora = hora;
+    function selectSlot(slot, btnEl) {
+      // slot puede ser objeto {hora, plazas_libres} o string (legacy)
+      state.hora         = typeof slot === 'string' ? slot : slot.hora;
+      state.plazas_libres = typeof slot === 'string' ? null : slot.plazas_libres;
       document.querySelectorAll('.hrw-slot-btn').forEach(b => b.classList.remove('is-selected'));
       btnEl.classList.add('is-selected');
       $('hrwBtnStep3').disabled = false;
@@ -1096,6 +1167,7 @@
 
       const nombre   = $('hrwNombre').value.trim();
       const email    = $('hrwEmail').value.trim();
+      const telefono = $('hrwTelefono').value.trim();
       const personas = parseInt($('hrwPersonas').value, 10);
 
       if (!nombre || nombre.length < 2) {
@@ -1108,6 +1180,11 @@
         valid = false;
       } else if (!isValidEmail(email)) {
         showFieldError('hrwEmail', 'Introduce un email con formato válido (ej: nombre@dominio.com).');
+        valid = false;
+      }
+
+      if (!telefono) {
+        showFieldError('hrwTelefono', 'El teléfono es obligatorio.');
         valid = false;
       }
 
@@ -1135,12 +1212,13 @@
       alertEl.classList.remove('is-visible');
 
       const payload = {
-        nombre:   $('hrwNombre').value.trim(),
-        email:    $('hrwEmail').value.trim().toLowerCase(),
-        servicio: state.servicio,
-        fecha:    state.fecha,
-        hora:     state.hora,
-        personas: parseInt($('hrwPersonas').value, 10)
+        service_id: state.service_id,           // UUID requerido por el sistema
+        nombre:     $('hrwNombre').value.trim(),
+        email:      $('hrwEmail').value.trim().toLowerCase(),
+        telefono:   $('hrwTelefono').value.trim(),
+        fecha:      state.fecha,
+        hora:       state.hora,
+        personas:   parseInt($('hrwPersonas').value, 10)
       };
 
       try {
@@ -1152,12 +1230,12 @@
 
         const data = await res.json();
 
-        if (!res.ok || !data.ok) {
+        if (!res.ok || data.ok === false) {
           throw new Error(data.error || 'Error al procesar la reserva. Inténtalo de nuevo.');
         }
 
-        // Mostrar confirmación
-        showConfirmation(data.data, payload.email);
+        // Mostrar confirmación con datos del estado local
+        showConfirmation(payload);
 
       } catch (err) {
         alertEl.textContent = err.message;
@@ -1170,11 +1248,13 @@
     }
 
     // ─── STEP 5: MOSTRAR CONFIRMACIÓN ───────────────────────────
-    function showConfirmation(data, email) {
-      $('hrwConfirmId').textContent    = data.confirmacion_id || '—';
-      $('hrwConfirmEmail').textContent = email;
+    function showConfirmation(payload) {
+      $('hrwConfirmId').textContent    = '✓';
+      $('hrwConfirmEmail').textContent = payload.email;
 
-      const servicioLabel = data.servicio === 'spa' ? '🧘 Spa & Wellness' : '🍽️ Restaurante';
+      const svcCfg       = config.services[state.servicio] || {};
+      const servicioLabel = `${svcCfg.icon || ''} ${svcCfg.label || state.servicio}`;
+      const horaCorta     = payload.hora ? payload.hora.slice(0, 5) : '—';
 
       $('hrwConfirmDetails').innerHTML = `
         <div class="hrw-confirm-row">
@@ -1183,15 +1263,23 @@
         </div>
         <div class="hrw-confirm-row">
           <span class="hrw-confirm-row-label">Fecha</span>
-          <span class="hrw-confirm-row-value">${formatDate(data.fecha)}</span>
+          <span class="hrw-confirm-row-value">${formatDate(payload.fecha)}</span>
         </div>
         <div class="hrw-confirm-row">
           <span class="hrw-confirm-row-label">Hora</span>
-          <span class="hrw-confirm-row-value">${data.hora}</span>
+          <span class="hrw-confirm-row-value">${horaCorta}</span>
         </div>
         <div class="hrw-confirm-row">
           <span class="hrw-confirm-row-label">Personas</span>
-          <span class="hrw-confirm-row-value">${data.personas} ${data.personas === 1 ? 'persona' : 'personas'}</span>
+          <span class="hrw-confirm-row-value">${payload.personas} ${payload.personas === 1 ? 'persona' : 'personas'}</span>
+        </div>
+        <div class="hrw-confirm-row">
+          <span class="hrw-confirm-row-label">Nombre</span>
+          <span class="hrw-confirm-row-value">${payload.nombre}</span>
+        </div>
+        <div class="hrw-confirm-row">
+          <span class="hrw-confirm-row-label">Teléfono</span>
+          <span class="hrw-confirm-row-value">${payload.telefono}</span>
         </div>
       `;
 
@@ -1208,11 +1296,12 @@
 
       // Limpiar selecciones
       document.querySelectorAll('.hrw-service-card').forEach(el => el.classList.remove('is-selected'));
-      $('hrwDateInput').value = '';
-      $('hrwNombre').value    = '';
-      $('hrwEmail').value     = '';
-      $('hrwPersonas').value  = '1';
-      ['hrwNombre','hrwEmail','hrwPersonas'].forEach(id => clearFieldError(id));
+      $('hrwDateInput').value  = '';
+      $('hrwNombre').value     = '';
+      $('hrwEmail').value      = '';
+      $('hrwTelefono').value   = '';
+      $('hrwPersonas').value   = '1';
+      ['hrwNombre','hrwEmail','hrwTelefono','hrwPersonas'].forEach(id => clearFieldError(id));
 
       $('hrwBtnStep1').disabled = true;
       $('hrwBtnStep2').disabled = true;
