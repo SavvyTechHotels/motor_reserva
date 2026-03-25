@@ -248,6 +248,40 @@
     }
     .hamburger span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: all .25s; }
 
+    /* ── Widget cards ── */
+    .widget-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .widget-card-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    .widget-card-body { flex: 1; min-width: 0; }
+    .widget-card-name { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+    .widget-card-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .widget-card-code {
+      background: #f4f1ee;
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--text);
+      word-break: break-all;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .widget-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge-inactive { background: #f0f0f0; color: #888; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+    .badge-active   { background: #e6f4ec; color: #27ae60; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+
     /* ── Sidebar overlay ── */
     .sidebar-overlay {
       display: none;
@@ -322,11 +356,9 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-logo">
-      <svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="32" height="32" rx="8" fill="#0e4159"/>
-        <text x="16" y="22" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="14" fill="white">ST</text>
-        <text x="42" y="22" font-family="Inter,sans-serif" font-weight="700" font-size="15" fill="#0e4159">SavvyTech</text>
-      </svg>
+      <div style="display:inline-block;background:#0e4159;border-radius:10px;padding:10px 22px">
+        <img src="img/logo_letra_blanco.png" alt="Savvy" style="height:32px;object-fit:contain;display:block">
+      </div>
     </div>
     <h1>Portal de Gestión</h1>
     <p>Accede con tus credenciales</p>
@@ -354,6 +386,7 @@
     <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menú">
       <span></span><span></span><span></span>
     </button>
+    <img src="img/logo_letra_blanco.png" alt="Savvy" style="height:24px;object-fit:contain;flex-shrink:0;filter:brightness(0) invert(1);opacity:.9">
     <h1 id="headerTitle">Mi Establecimiento</h1>
     <button id="switchEstBtn" onclick="showEstPicker()" style="display:none;background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;flex-shrink:0">⇄ Cambiar</button>
     <span class="user-badge" id="headerUser"></span>
@@ -363,10 +396,11 @@
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="layout">
     <nav class="sidebar" id="sidebar">
-      <button class="active" onclick="showTab('config', this)">⚙️ Mi establecimiento</button>
-      <button onclick="showTab('inventario', this)">📦 Inventario</button>
-      <button onclick="showTab('reservas', this)">📅 Reservas</button>
-      <button onclick="showTab('cuenta', this)">🔑 Mi cuenta</button>
+      <button class="active" onclick="showTab('config', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg> Mi establecimiento</button>
+      <button onclick="showTab('widgets', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Mis Widgets</button>
+      <button onclick="showTab('inventario', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Inventario</button>
+      <button onclick="showTab('reservas', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reservas</button>
+      <button onclick="showTab('cuenta', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6M15.5 7.5l3 3"/></svg> Mi cuenta</button>
     </nav>
     <main>
 
@@ -427,24 +461,48 @@
         </div>
       </div>
 
+      <!-- TAB: WIDGETS -->
+      <div id="tab-widgets" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Mis Widgets</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Copia el código de cada servicio y pégalo en tu web para que los clientes puedan hacer reservas.</p>
+          <div id="ownerWidgetsList"></div>
+        </div>
+      </div>
+
       <!-- TAB: INVENTARIO -->
       <div id="tab-inventario" class="tab-panel">
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Gestión de disponibilidad</span>
+            <span class="card-title">Control de stock por servicio</span>
           </div>
-          <div class="cal-header">
-            <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(-1)">‹</button>
-            <h3 id="ownerCalTitle">—</h3>
-            <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(1)">›</button>
-          </div>
-          <div class="cal-grid" id="ownerCalGrid"></div>
-          <div id="ownerDayDetail" style="display:none;margin-top:20px">
-            <div class="card-header">
-              <span class="card-title" id="ownerDayTitle">Día</span>
-              <button class="btn-primary btn-sm" onclick="openOwnerSlotModal()">+ Añadir override</button>
+          <div style="margin-bottom:16px">
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;display:flex">
+              <label style="white-space:nowrap;font-size:13px">Servicio:</label>
+              <select id="ownerInvSvcSelect" onchange="loadOwnerInventario()" style="min-width:220px;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+                <option value="">— Selecciona un servicio —</option>
+              </select>
             </div>
-            <div class="slots-container" id="ownerSlotsContainer"></div>
+          </div>
+          <div id="ownerCalWrap" style="display:none">
+            <div class="cal-header">
+              <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(-1)">‹</button>
+              <h3 id="ownerCalTitle">—</h3>
+              <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(1)">›</button>
+            </div>
+            <div class="cal-grid" id="ownerCalGrid"></div>
+            <div id="ownerDayDetail" style="display:none;margin-top:20px">
+              <div class="card-header">
+                <span class="card-title" id="ownerDayTitle">Día</span>
+                <button class="btn-primary btn-sm" onclick="openOwnerSlotModal()">+ Modificar aforo</button>
+              </div>
+              <div class="slots-container" id="ownerSlotsContainer"></div>
+            </div>
+          </div>
+          <div id="ownerInvEmpty" class="empty-state">
+            <p>Selecciona un servicio para gestionar su disponibilidad</p>
           </div>
         </div>
       </div>
@@ -454,9 +512,18 @@
         <div class="card">
           <div class="card-header">
             <span class="card-title">Mis reservas</span>
-            <button class="btn-secondary btn-sm" onclick="ownerExportCSV()">⬇ CSV</button>
+            <div class="flex" style="gap:8px">
+              <button class="btn-primary btn-sm" onclick="openOwnerManualBkModal()">+ Nueva reserva</button>
+              <button class="btn-secondary btn-sm" onclick="ownerExportCSV()">⬇ CSV</button>
+            </div>
           </div>
           <div class="booking-filters">
+            <div class="form-group">
+              <label>Servicio</label>
+              <select id="ownerBkSvcSelect" onchange="ownerLoadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;min-width:160px">
+                <option value="">— Todos —</option>
+              </select>
+            </div>
             <div class="form-group">
               <label>Desde</label>
               <input id="ownerBkFrom" type="date" onchange="ownerLoadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
@@ -465,15 +532,15 @@
               <label>Hasta</label>
               <input id="ownerBkTo" type="date" onchange="ownerLoadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
             </div>
-            <button class="btn-secondary" onclick="ownerLoadReservas()">🔍 Buscar</button>
+            <button class="btn-secondary" onclick="ownerLoadReservas()">${ICONS.search} Buscar</button>
           </div>
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Fecha</th><th>Hora</th><th>Nombre</th><th>Email</th><th>Personas</th><th>Estado</th><th></th></tr>
+                <tr><th>Fecha</th><th>Hora</th><th>Nombre</th><th>Email</th><th>Pers.</th><th>Servicio</th><th>Estado</th><th></th></tr>
               </thead>
               <tbody id="ownerBkTbody">
-                <tr><td colspan="7"><div class="empty-state"><p>Selecciona un rango de fechas</p></div></td></tr>
+                <tr><td colspan="8"><div class="empty-state"><p>Selecciona un rango de fechas</p></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -516,21 +583,72 @@
     <div class="modal-body">
       <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px" id="ownerSlotDate"></p>
       <div class="form-group" style="margin-bottom:12px">
-        <label>Hora concreta (vacío = todo el día)</label>
-        <input id="ownerSlotHora" type="time">
+        <label>Hora concreta</label>
+        <select id="ownerSlotHora" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px"></select>
       </div>
       <div class="form-group" style="margin-bottom:12px">
-        <label>Aforo máximo (0 = cerrado)</label>
+        <label>Aforo disponible (0 = cerrado)</label>
         <input id="ownerSlotAforo" type="number" min="0">
-      </div>
-      <div class="form-group">
-        <label>Motivo (opcional)</label>
-        <input id="ownerSlotMotivo" type="text" placeholder="Ej: Evento privado...">
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('ownerSlotModal')">Cancelar</button>
       <button class="btn-primary" onclick="saveOwnerSlot()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Nueva Reserva Manual (Owner)
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="ownerManualBkModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h2>Nueva reserva manual</h2>
+      <button class="close-btn" onclick="closeModal('ownerManualBkModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Servicio *</label>
+          <select id="ownerManBkSvc" onchange="fetchOwnerManualSlots()">
+            <option value="">— Selecciona —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha *</label>
+          <input id="ownerManBkFecha" type="date" onchange="fetchOwnerManualSlots()">
+        </div>
+        <div class="form-group">
+          <label>Hora *</label>
+          <select id="ownerManBkHora">
+            <option value="">— Selecciona servicio y fecha —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nombre del cliente *</label>
+          <input id="ownerManBkNombre" type="text" placeholder="Nombre completo">
+        </div>
+        <div class="form-group">
+          <label>Email del cliente *</label>
+          <input id="ownerManBkEmail" type="email" placeholder="email@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Personas *</label>
+          <input id="ownerManBkPersonas" type="number" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="ownerManBkEstado">
+            <option value="confirmada">Confirmada</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('ownerManualBkModal')">Cancelar</button>
+      <button class="btn-primary" id="ownerManBkSaveBtn" onclick="saveOwnerManualBk()">Crear reserva</button>
     </div>
   </div>
 </div>
@@ -542,6 +660,15 @@
 // CONFIG SUPABASE
 // ══════════════════════════════════════
 const DEFAULT_SB_URL = 'https://ritjspwzwllptwqmeqwh.supabase.co';
+
+const ICONS = {
+  search:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  trash:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+  calendarLg: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  utensils:   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
+  droplet:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+  hotelMd:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-4h6v4"/></svg>`,
+};
 const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdGpzcHd6d2xscHR3cW1lcXdoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDI3MDkwNCwiZXhwIjoyMDg5ODQ2OTA0fQ.OWdzA9DKDBZ1co6_Wp6HAPUiLT45TJXhSehf7YCBk6M';
 
 const SB_URL_KEY = 'sb_url';
@@ -677,7 +804,7 @@ async function pickEstablishment() {
 function showEstPicker() {
   hide('loginScreen'); hide('appScreen');
   const screen = document.getElementById('estPickerScreen');
-  const icons = { spa: '♨️', restaurante: '🍽️', otro: '🏨' };
+  const icons = { spa: ICONS.droplet, restaurante: ICONS.utensils, otro: ICONS.hotelMd };
   screen.innerHTML = `
     <div class="picker-card">
       <div style="margin-bottom:20px">
@@ -733,8 +860,11 @@ async function startApp() {
   document.getElementById('headerTitle').textContent = estData.nombre;
   document.title = 'Portal — ' + estData.nombre;
 
+  // Load services for this establishment
+  ownerServices = await loadOwnerServices();
+
   loadConfigForm();
-  initOwnerCalendar();
+  initOwnerInventario();
   setOwnerDefaultDates();
   ownerLoadReservas();
 }
@@ -829,25 +959,112 @@ async function saveConfig() {
 }
 
 // ══════════════════════════════════════
+// SERVICIOS
+// ══════════════════════════════════════
+let ownerServices = [];
+
+async function loadOwnerServices() {
+  try {
+    const svcs = await sbFetch(`/services?establishment_id=eq.${session.establishmentId}&activo=eq.true&select=id,nombre,slug,aforo_max,intervalo_min,horario,tipo_horario,fechas_especificas&order=nombre.asc`);
+    ownerServices = svcs;
+    // Populate all service selects
+    const svcOptions = '<option value="">— Todos —</option>' + svcs.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+    const bkSel = document.getElementById('ownerBkSvcSelect');
+    if (bkSel) bkSel.innerHTML = svcOptions;
+    const invSel = document.getElementById('ownerInvSvcSelect');
+    if (invSel) invSel.innerHTML = '<option value="">— Selecciona un servicio —</option>' + svcs.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+    const manSel = document.getElementById('ownerManBkSvc');
+    if (manSel) manSel.innerHTML = '<option value="">— Selecciona —</option>' + svcs.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+    return svcs;
+  } catch (e) { ownerServices = []; return []; }
+}
+
+// ══════════════════════════════════════
+// TAB: WIDGETS
+// ══════════════════════════════════════
+async function loadOwnerWidgets() {
+  const container = document.getElementById('ownerWidgetsList');
+  container.innerHTML = '<p style="color:var(--text-muted);font-size:13px">Cargando…</p>';
+  try {
+    const svcs = await sbFetch(`/services?establishment_id=eq.${session.establishmentId}&select=id,nombre,slug,duracion,precio,color_accent,activo,descripcion&order=nombre.asc`);
+    if (!svcs.length) {
+      container.innerHTML = '<div class="empty-state"><p>No hay servicios creados para este establecimiento.<br>El administrador debe crearlos desde el panel de administración.</p></div>';
+      return;
+    }
+    const widgetUrl = `${window.location.origin}${window.location.pathname.replace('owner.html', 'widget-reservas.js')}`;
+    const previewUrl = `${window.location.origin}${window.location.pathname.replace('owner.html', 'preview.html')}`;
+    container.innerHTML = svcs.map(s => {
+      const code = `&lt;div id="hotel-reservas"&gt;&lt;/div&gt;\n&lt;script src="${widgetUrl}?service_slug=${s.slug}"&gt;&lt;/script&gt;`;
+      const meta = [
+        s.duracion ? s.duracion + ' min' : null,
+        s.precio != null ? Number(s.precio).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }) + '/persona' : null,
+        `slug: ${s.slug}`
+      ].filter(Boolean).join(' · ');
+      return `
+      <div class="widget-card">
+        <div class="widget-card-dot" style="background:${s.color_accent || '#0e4159'}"></div>
+        <div class="widget-card-body">
+          <div class="widget-card-name">${s.nombre} <span class="${s.activo ? 'badge-active' : 'badge-inactive'}">${s.activo ? 'Activo' : 'Inactivo'}</span></div>
+          ${s.descripcion ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${s.descripcion}</div>` : ''}
+          <div class="widget-card-meta">${meta}</div>
+          <div class="widget-card-code" id="wcode-${s.id}">${code}</div>
+          <div class="widget-card-actions">
+            <button class="btn-secondary btn-sm" onclick="ownerCopyEmbed('${s.id}','${s.slug}')">📋 Copiar código</button>
+            <button class="btn-secondary btn-sm" onclick="window.open('${previewUrl}?service_slug=${s.slug}','_blank')">👁 Vista previa</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = `<p style="color:var(--danger);font-size:13px">Error: ${e.message}</p>`;
+  }
+}
+
+function ownerCopyEmbed(svcId, slug) {
+  const el = document.getElementById('wcode-' + svcId);
+  const widgetUrl = `${window.location.origin}${window.location.pathname.replace('owner.html', 'widget-reservas.js')}`;
+  const plain = `<div id="hotel-reservas"></div>\n<script src="${widgetUrl}?service_slug=${slug}"><\/script>`;
+  navigator.clipboard.writeText(plain).then(() => showToast('Código copiado ✓'));
+}
+
+// ══════════════════════════════════════
 // TAB: INVENTARIO
 // ══════════════════════════════════════
+let ownerInvSvcId = null;
 let ownerInvYear  = new Date().getFullYear();
 let ownerInvMonth = new Date().getMonth();
 let ownerOverrides = [];
 let ownerSelectedDate = null;
 
-function initOwnerCalendar() {
+function initOwnerInventario() {
   ownerInvYear  = new Date().getFullYear();
   ownerInvMonth = new Date().getMonth();
-  fetchOwnerMonthOverrides().then(renderOwnerCalendar);
+  document.getElementById('ownerCalWrap').style.display = 'none';
+  document.getElementById('ownerInvEmpty').style.display = 'block';
+}
+
+async function loadOwnerInventario() {
+  ownerInvSvcId = document.getElementById('ownerInvSvcSelect').value;
+  if (!ownerInvSvcId) {
+    document.getElementById('ownerCalWrap').style.display = 'none';
+    document.getElementById('ownerInvEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('ownerCalWrap').style.display = 'block';
+  document.getElementById('ownerInvEmpty').style.display = 'none';
+  ownerInvYear  = new Date().getFullYear();
+  ownerInvMonth = new Date().getMonth();
+  await fetchOwnerMonthOverrides();
+  renderOwnerCalendar();
 }
 
 async function fetchOwnerMonthOverrides() {
+  if (!ownerInvSvcId) { ownerOverrides = []; return; }
   const from = `${ownerInvYear}-${String(ownerInvMonth+1).padStart(2,'0')}-01`;
   const lastDay = new Date(ownerInvYear, ownerInvMonth+1, 0).getDate();
   const to = `${ownerInvYear}-${String(ownerInvMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
   try {
-    ownerOverrides = await sbFetch(`/inventory?establishment_id=eq.${session.establishmentId}&fecha=gte.${from}&fecha=lte.${to}&select=*&order=fecha.asc,hora.asc`);
+    ownerOverrides = await sbFetch(`/inventory_custom?service_id=eq.${ownerInvSvcId}&fecha=gte.${from}&fecha=lte.${to}&select=*&order=fecha.asc,hora.asc`);
   } catch (e) { ownerOverrides = []; }
 }
 
@@ -895,35 +1112,74 @@ function renderOwnerDaySlots(dateStr) {
   if (!dayOv.length) { c.innerHTML = '<div class="text-muted" style="padding:12px;font-size:13px">Sin overrides — se usa el aforo por defecto.</div>'; return; }
   c.innerHTML = dayOv.map(o => `
     <div class="slot-item">
-      <span class="slot-time">${o.hora ? o.hora.slice(0,5) : '🌍 Todo el día'}</span>
-      <span style="flex:1;color:var(--text-muted)">Aforo: <strong>${o.aforo_maximo}</strong>${o.aforo_maximo===0?' <span class="badge badge-gray">Cerrado</span>':''}</span>
-      <span style="font-size:11px;color:var(--text-muted)">${o.motivo||''}</span>
-      <button class="btn-danger btn-sm" onclick="deleteOwnerOv('${o.id}','${dateStr}')">🗑</button>
+      <span class="slot-time">${o.hora ? o.hora.slice(0,5) : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Todo el día`}</span>
+      <span style="flex:1;color:var(--text-muted)">Aforo: <strong>${o.aforo_disponible}</strong>${o.aforo_disponible===0?' <span class="badge badge-gray">Cerrado</span>':''}</span>
+      <button class="btn-danger btn-sm" onclick="deleteOwnerOv('${o.id}','${dateStr}')" title="Eliminar">${ICONS.trash}</button>
     </div>`).join('');
 }
 
+function generateServiceSlots(svc, dateStr) {
+  if (!svc || !svc.horario) return [];
+  const h = svc.horario;
+  let startStr, endStr;
+  if (h.tipo === 'especifico') {
+    if (!(h.fechas || []).includes(dateStr)) return [];
+    startStr = h.apertura;
+    endStr   = h.cierre;
+  } else {
+    const dayMap = ['dom','lun','mar','mie','jue','vie','sab'];
+    const d = new Date(dateStr + 'T12:00:00Z');
+    const dayKey = dayMap[d.getUTCDay()];
+    const horario = h[dayKey];
+    if (!horario) return [];
+    [startStr, endStr] = horario;
+  }
+  const [sh, sm] = startStr.split(':').map(Number);
+  const [eh, em] = endStr.split(':').map(Number);
+  const interval = svc.intervalo_min || 60;
+  const slots = [];
+  let cur = sh * 60 + sm;
+  const end = eh * 60 + em;
+  while (cur < end) {
+    const hh = String(Math.floor(cur / 60)).padStart(2, '0');
+    const mm = String(cur % 60).padStart(2, '0');
+    slots.push(hh + ':' + mm + ':00');
+    cur += interval;
+  }
+  return slots;
+}
+
 function openOwnerSlotModal() {
-  if (!ownerSelectedDate) return;
+  if (!ownerSelectedDate || !ownerInvSvcId) return;
   document.getElementById('ownerSlotDate').textContent = 'Fecha: ' + ownerSelectedDate;
-  document.getElementById('ownerSlotHora').value = '';
+  const svc = ownerServices.find(s => s.id === ownerInvSvcId);
+  const slots = generateServiceSlots(svc, ownerSelectedDate);
+  const sel = document.getElementById('ownerSlotHora');
+  sel.innerHTML = '<option value="">— Todo el día —</option>' +
+    slots.map(h => `<option value="${h}">${h.slice(0,5)}</option>`).join('');
   document.getElementById('ownerSlotAforo').value = '';
-  document.getElementById('ownerSlotMotivo').value = '';
   openModal('ownerSlotModal');
 }
 
 async function saveOwnerSlot() {
-  const hora = document.getElementById('ownerSlotHora').value;
-  const aforo = document.getElementById('ownerSlotAforo').value;
+  const horaRaw = document.getElementById('ownerSlotHora').value;
+  const aforo   = document.getElementById('ownerSlotAforo').value;
   if (aforo === '') { showToast('Aforo es obligatorio', 'error'); return; }
+
+  // El select ya devuelve HH:MM:SS o vacío (todo el día)
+  const hora = horaRaw || null;
+
   try {
-    await sbFetch('/inventory', { method: 'POST', body: JSON.stringify({
-      id: crypto.randomUUID(),
-      establishment_id: session.establishmentId,
-      fecha: ownerSelectedDate,
-      hora: hora || null,
-      aforo_maximo: parseInt(aforo),
-      motivo: document.getElementById('ownerSlotMotivo').value.trim() || null
-    })});
+    await sbFetch('/inventory_custom?on_conflict=service_id,fecha,hora', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({
+        service_id: ownerInvSvcId,
+        fecha: ownerSelectedDate,
+        hora,
+        aforo_disponible: parseInt(aforo),
+      }),
+    });
     showToast('Guardado ✓');
     closeModal('ownerSlotModal');
     await fetchOwnerMonthOverrides();
@@ -935,7 +1191,7 @@ async function saveOwnerSlot() {
 async function deleteOwnerOv(id, dateStr) {
   if (!confirm('¿Eliminar override?')) return;
   try {
-    await sbFetch('/inventory?id=eq.' + id, { method: 'DELETE' });
+    await sbFetch('/inventory_custom?id=eq.' + id, { method: 'DELETE' });
     showToast('Eliminado');
     await fetchOwnerMonthOverrides();
     renderOwnerCalendar();
@@ -959,7 +1215,9 @@ function setOwnerDefaultDates() {
 async function ownerLoadReservas() {
   const from = document.getElementById('ownerBkFrom').value;
   const to   = document.getElementById('ownerBkTo').value;
-  let path = `/bookings?establishment_id=eq.${session.establishmentId}&order=fecha.asc,hora.asc`;
+  const svcId = document.getElementById('ownerBkSvcSelect') ? document.getElementById('ownerBkSvcSelect').value : '';
+  let path = `/bookings?establishment_id=eq.${session.establishmentId}&select=*,services(nombre)&order=fecha.asc,hora.asc`;
+  if (svcId) path += `&service_id=eq.${svcId}`;
   if (from) path += `&fecha=gte.${from}`;
   if (to)   path += `&fecha=lte.${to}`;
   try {
@@ -971,7 +1229,7 @@ async function ownerLoadReservas() {
 function renderOwnerBkTable() {
   const tbody = document.getElementById('ownerBkTbody');
   if (!ownerBkData.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">📅</div><p>No hay reservas en este período</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">${ICONS.calendarLg}</div><p>No hay reservas en este período</p></div></td></tr>`;
     return;
   }
   const colors = { confirmada:'badge-green', pendiente:'badge-amber', cancelada:'badge-gray' };
@@ -982,6 +1240,7 @@ function renderOwnerBkTable() {
       <td>${b.nombre}</td>
       <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
       <td style="text-align:center">${b.personas}</td>
+      <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${colors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
       <td>
         <select onchange="ownerUpdateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px;font-size:11px">
@@ -1008,6 +1267,75 @@ function ownerExportCSV() {
   const csv = [cols.join(','), ...ownerBkData.map(b => cols.map(c => `"${(b[c]||'').toString().replace(/"/g,'""')}"`).join(','))].join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download = 'reservas_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+}
+
+// ══════════════════════════════════════
+// RESERVA MANUAL
+// ══════════════════════════════════════
+function openOwnerManualBkModal() {
+  document.getElementById('ownerManBkFecha').value = '';
+  document.getElementById('ownerManBkHora').innerHTML = '<option value="">— Selecciona fecha primero —</option>';
+  document.getElementById('ownerManBkPersonas').value = 1;
+  document.getElementById('ownerManBkNombre').value = '';
+  document.getElementById('ownerManBkEmail').value = '';
+  document.getElementById('ownerManBkEstado').value = 'confirmada';
+  document.getElementById('ownerManualBkModal').classList.add('open');
+}
+
+async function fetchOwnerManualSlots() {
+  const fecha     = document.getElementById('ownerManBkFecha').value;
+  const serviceId = document.getElementById('ownerManBkSvc').value;
+  const horaSel   = document.getElementById('ownerManBkHora');
+  if (!fecha || !serviceId) return;
+  horaSel.innerHTML = '<option value="">Cargando…</option>';
+  horaSel.disabled = true;
+  try {
+    const res = await fetch(`https://vmi3024621.contaboserver.net/webhook/disponibilidad?service_id=${encodeURIComponent(serviceId)}&fecha=${encodeURIComponent(fecha)}`);
+    const data = await res.json();
+    const slots = data.ok ? data.data : [];
+    if (!slots.length) {
+      horaSel.innerHTML = '<option value="">Sin slots disponibles</option>';
+    } else {
+      horaSel.innerHTML = '<option value="">— Elige hora —</option>' +
+        slots.map(s => {
+          const h = s.hora ? s.hora.slice(0,5) : '';
+          const plazas = s.plazas_libres != null ? ` (${s.plazas_libres} plazas)` : '';
+          return `<option value="${s.hora}">${h}${plazas}</option>`;
+        }).join('');
+    }
+  } catch {
+    horaSel.innerHTML = '<option value="">Error al cargar slots</option>';
+  }
+  horaSel.disabled = false;
+}
+
+async function saveOwnerManualBk() {
+  const nombre   = document.getElementById('ownerManBkNombre').value.trim();
+  const email    = document.getElementById('ownerManBkEmail').value.trim();
+  const fecha    = document.getElementById('ownerManBkFecha').value;
+  const hora     = document.getElementById('ownerManBkHora').value;
+  const personas = parseInt(document.getElementById('ownerManBkPersonas').value) || 1;
+  const estado   = document.getElementById('ownerManBkEstado').value;
+  if (!nombre || !email || !fecha || !hora) {
+    showToast('Selecciona fecha, hora y rellena los datos del cliente'); return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Email inválido'); return;
+  }
+  const serviceId = document.getElementById('ownerManBkSvc').value;
+  if (!serviceId) { showToast('Selecciona un servicio'); return; }
+  const btn = document.getElementById('ownerManBkSaveBtn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await sbFetch('/bookings', {
+      method: 'POST',
+      body: JSON.stringify({ establishment_id: session.establishmentId, service_id: serviceId, nombre, email, fecha, hora: hora.length === 5 ? hora + ':00' : hora, personas, estado })
+    });
+    closeModal('ownerManualBkModal');
+    showToast('Reserva creada ✓');
+    ownerLoadReservas();
+  } catch (e) { showToast('Error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Crear reserva'; }
 }
 
 // ══════════════════════════════════════
@@ -1053,6 +1381,7 @@ function showTab(name, btn) {
   document.querySelectorAll('nav.sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name === 'widgets') loadOwnerWidgets();
   closeSidebar();
 }
 

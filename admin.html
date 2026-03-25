@@ -577,8 +577,8 @@
   <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menú">
     <span></span><span></span><span></span>
   </button>
-  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><rect width="26" height="26" rx="6" fill="rgba(255,255,255,.15)"/><text x="13" y="18" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="11" fill="white">ST</text></svg>
-  <h1>SavvyTech — Panel Admin</h1>
+  <img src="img/logo_letra_blanco.png" alt="Savvy" style="height:28px;object-fit:contain;flex-shrink:0;filter:brightness(0) invert(1);opacity:.9">
+  <h1>Panel Admin</h1>
   <span id="cfgStatus">Sin configurar</span>
   <button class="btn-secondary btn-sm" onclick="toggleSettings()">Configuración</button>
   <button class="btn-secondary btn-sm" onclick="adminLogout()" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff">Salir</button>
@@ -590,11 +590,12 @@
 <div class="layout">
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
-    <button class="active" onclick="showTab('establecimientos', this)">🏨 Establecimientos</button>
-    <button onclick="showTab('inventario', this)">📦 Inventario</button>
-    <button onclick="showTab('reservas', this)">📅 Reservas</button>
+    <button class="active" onclick="showTab('establecimientos', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-4h6v4"/></svg> Establecimientos</button>
+    <button onclick="showTab('servicios', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14M9.17 9.17A4 4 0 1 0 14.83 14.83"/></svg> Servicios</button>
+    <button onclick="showTab('inventario', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Inventario</button>
+    <button onclick="showTab('reservas', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reservas</button>
     <div class="sidebar-sep"></div>
-    <button onclick="toggleSettings()" class="text-muted">⚙️ Configuración</button>
+    <button onclick="toggleSettings()" class="text-muted"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg> Configuración</button>
   </nav>
 
   <main>
@@ -621,7 +622,46 @@
               </tr>
             </thead>
             <tbody id="estTbody">
-              <tr><td colspan="7"><div class="empty-state"><div class="icon">🏨</div><p>Cargando...</p></div></td></tr>
+              <tr><td colspan="7"><div class="empty-state"><div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-4h6v4"/></svg></div><p>Cargando...</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         TAB: SERVICIOS
+    ══════════════════════════════════════ -->
+    <div id="tab-servicios" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Catálogo de Servicios</span>
+          <button class="btn-primary" onclick="openServiceModal()">+ Nuevo servicio</button>
+        </div>
+        <div style="margin-bottom:14px">
+          <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;display:flex">
+            <label style="white-space:nowrap;font-size:13px">Establecimiento:</label>
+            <select id="svcEstFilter" onchange="loadServices(this.value)" style="min-width:220px;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+              <option value="">— Todos —</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="svcTable">
+            <thead>
+              <tr>
+                <th>Servicio</th>
+                <th>Establecimiento</th>
+                <th>Slug</th>
+                <th>Duración</th>
+                <th>Aforo</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="svcTbody">
+              <tr><td colspan="8"><div class="empty-state"><div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg></div><p>Cargando servicios...</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -639,8 +679,14 @@
         <div class="flex" style="margin-bottom:16px;flex-wrap:wrap;gap:10px">
           <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
             <label style="white-space:nowrap">Establecimiento:</label>
-            <select id="invEstSelect" onchange="loadInventario()" style="min-width:220px;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+            <select id="invEstSelect" onchange="onInvEstChange()" style="min-width:200px;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
               <option value="">— Selecciona —</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
+            <label style="white-space:nowrap">Servicio:</label>
+            <select id="invSvcSelect" onchange="loadInventario()" style="min-width:200px;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px" disabled>
+              <option value="">— Selecciona establecimiento —</option>
             </select>
           </div>
         </div>
@@ -656,14 +702,13 @@
           <div id="invDayDetail" class="mt-20" style="display:none">
             <div class="card-header">
               <span class="card-title" id="invDayTitle">Día seleccionado</span>
-              <button class="btn-primary btn-sm" onclick="openSlotModal()">+ Añadir override</button>
+              <button class="btn-primary btn-sm" onclick="openSlotModal()">+ Modificar aforo</button>
             </div>
             <div class="slots-container" id="slotsContainer"></div>
           </div>
         </div>
         <div id="invEmpty" class="empty-state">
-          <div class="icon">📦</div>
-          <p>Selecciona un establecimiento para gestionar su inventario</p>
+          <p>Selecciona establecimiento y servicio para gestionar el aforo</p>
         </div>
       </div>
     </div>
@@ -675,12 +720,21 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title">Reservas</span>
-          <button class="btn-secondary btn-sm" onclick="exportCSV()">⬇ Exportar CSV</button>
+          <div class="flex" style="gap:8px">
+            <button class="btn-primary btn-sm" onclick="openManualBkModal()">+ Nueva reserva</button>
+            <button class="btn-secondary btn-sm" onclick="exportCSV()">⬇ CSV</button>
+          </div>
         </div>
         <div class="booking-filters">
           <div class="form-group">
             <label>Establecimiento</label>
-            <select id="bkEstSelect" onchange="loadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;min-width:200px">
+            <select id="bkEstSelect" onchange="onBkEstChange()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;min-width:180px">
+              <option value="">— Todos —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Servicio</label>
+            <select id="bkSvcSelect" onchange="loadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px;min-width:180px">
               <option value="">— Todos —</option>
             </select>
           </div>
@@ -692,7 +746,7 @@
             <label>Hasta</label>
             <input id="bkTo" type="date" onchange="loadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
           </div>
-          <button class="btn-secondary" onclick="loadReservas()">🔍 Buscar</button>
+          <button class="btn-secondary" onclick="loadReservas()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Buscar</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -702,14 +756,15 @@
                 <th>Hora</th>
                 <th>Nombre</th>
                 <th>Email</th>
-                <th>Personas</th>
+                <th>Pers.</th>
                 <th>Establecimiento</th>
+                <th>Servicio</th>
                 <th>Estado</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="bkTbody">
-              <tr><td colspan="8"><div class="empty-state"><p>Selecciona filtros y busca</p></div></td></tr>
+              <tr><td colspan="9"><div class="empty-state"><p>Selecciona filtros y busca</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -787,9 +842,9 @@
             <!-- Preview del logo en el header del widget -->
             <div id="logoPreviewWrap" style="flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);width:180px">
               <div id="logoPreviewHeader" style="background:#0e4159;padding:12px 14px;display:flex;align-items:center;gap:10px">
-                <div id="logoPreviewBox" style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden">
-                  <span id="logoPreviewEmoji">♨</span>
-                  <img id="logoPreviewImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover">
+                <div id="logoPreviewBox" style="display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+                  <span id="logoPreviewEmoji"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></span>
+                  <img id="logoPreviewImg" src="" alt="" style="display:none;max-height:28px;max-width:100px;object-fit:contain;filter:brightness(0) invert(1)">
                 </div>
                 <div>
                   <div style="color:#fff;font-size:11px;font-weight:600" id="logoPreviewName">Tu establecimiento</div>
@@ -909,16 +964,12 @@
       <p style="margin-bottom:12px;color:var(--text-muted);font-size:13px" id="slotModalDate"></p>
       <div class="form-grid" style="grid-template-columns:1fr">
         <div class="form-group">
-          <label>Hora concreta (vacío = aplica a todo el día)</label>
-          <input id="slotHora" type="time" placeholder="HH:MM">
+          <label>Hora concreta</label>
+          <select id="slotHora" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px"></select>
         </div>
         <div class="form-group">
-          <label>Aforo máximo *</label>
+          <label>Aforo disponible *</label>
           <input id="slotAforo" type="number" min="0" placeholder="0 = cerrado">
-        </div>
-        <div class="form-group">
-          <label>Motivo (opcional)</label>
-          <input id="slotMotivo" type="text" placeholder="Ej: Evento privado, mantenimiento...">
         </div>
       </div>
     </div>
@@ -930,6 +981,177 @@
 </div>
 
 </div><!-- /adminApp -->
+
+<!-- ══════════════════════════════════════
+     MODAL: Nueva Reserva Manual
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="manualBkModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h2>Nueva reserva manual</h2>
+      <button class="close-btn" onclick="closeModal('manualBkModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Establecimiento *</label>
+          <select id="manBkEst" onchange="loadManualBkServices()"></select>
+        </div>
+        <div class="form-group">
+          <label>Servicio *</label>
+          <select id="manBkSvc" onchange="fetchManualSlots()">
+            <option value="">— Selecciona establecimiento —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha *</label>
+          <input id="manBkFecha" type="date" onchange="fetchManualSlots()">
+        </div>
+        <div class="form-group">
+          <label>Hora *</label>
+          <select id="manBkHora">
+            <option value="">— Selecciona fecha primero —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nombre del cliente *</label>
+          <input id="manBkNombre" type="text" placeholder="Nombre completo">
+        </div>
+        <div class="form-group">
+          <label>Email del cliente *</label>
+          <input id="manBkEmail" type="email" placeholder="email@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Personas *</label>
+          <input id="manBkPersonas" type="number" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="manBkEstado">
+            <option value="confirmada">Confirmada</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('manualBkModal')">Cancelar</button>
+      <button class="btn-primary" id="manBkSaveBtn" onclick="saveManualBk()">Crear reserva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Servicio
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="svcModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h2 id="svcModalTitle">Nuevo servicio</h2>
+      <button class="close-btn" onclick="closeModal('svcModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="svcId">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Establecimiento *</label>
+          <select id="svcEstId" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px"></select>
+        </div>
+        <div class="form-group">
+          <label>Nombre del servicio *</label>
+          <input id="svcNombre" type="text" placeholder="Ej: Masaje Relajante" oninput="autoSvcSlug()">
+        </div>
+        <div class="form-group">
+          <label>Slug (widget URL) *</label>
+          <input id="svcSlug" type="text" placeholder="masaje-relajante">
+        </div>
+        <div class="form-group">
+          <label>Duración (minutos)</label>
+          <input id="svcDuracion" type="number" value="60" min="5" step="5">
+        </div>
+        <div class="form-group">
+          <label>Aforo máximo por slot</label>
+          <input id="svcAforo" type="number" value="10" min="1">
+        </div>
+        <div class="form-group">
+          <label>Precio (€)</label>
+          <input id="svcPrecio" type="number" min="0" step="0.01" placeholder="Opcional">
+        </div>
+        <div class="form-group">
+          <label>Intervalo entre slots (min)</label>
+          <input id="svcIntervalo" type="number" value="60" min="15" step="15">
+        </div>
+        <div class="form-group">
+          <label>Color de acento (primario)</label>
+          <div class="color-row">
+            <input type="color" id="svcColorPicker" value="#0e4159" oninput="syncColor(this,'svcColor')">
+            <input type="text" id="svcColor" value="#0e4159" placeholder="#0e4159" oninput="syncColor(this,'svcColorPicker',true)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Color secundario (fondo)</label>
+          <div class="color-row">
+            <input type="color" id="svcColorSecPicker" value="#f6f3f1" oninput="syncColor(this,'svcColorSec')">
+            <input type="text" id="svcColorSec" value="#f6f3f1" placeholder="#f6f3f1" oninput="syncColor(this,'svcColorSecPicker',true)">
+          </div>
+        </div>
+        <div class="form-group form-full">
+          <label>Imagen del servicio (URL)</label>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <input id="svcFotoUrl" type="url" placeholder="https://... (JPG, PNG, WebP)" style="flex:1;border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:13px" oninput="previewSvcFoto(this.value)">
+            <div id="svcFotoPreview" style="display:none;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--border);flex-shrink:0">
+              <img id="svcFotoImg" src="" style="width:100%;height:100%;object-fit:cover">
+            </div>
+          </div>
+        </div>
+        <div class="form-group form-full">
+          <label>Descripción (opcional)</label>
+          <input id="svcDesc" type="text" placeholder="Breve descripción del servicio">
+        </div>
+      </div>
+      <div class="divider"></div>
+      <p class="section-title">Horario del servicio</p>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border:1px solid var(--border);border-radius:7px;flex:1;justify-content:center" id="tipoSemanal">
+          <input type="radio" name="svcTipoHorario" value="semanal" checked onchange="switchTipoHorario('semanal')"> Semanal (recurrente)
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:8px 14px;border:1px solid var(--border);border-radius:7px;flex:1;justify-content:center" id="tipoEspecifico">
+          <input type="radio" name="svcTipoHorario" value="especifico" onchange="switchTipoHorario('especifico')"> Fechas concretas
+        </label>
+      </div>
+
+      <!-- Horario semanal -->
+      <div id="svcHorarioSemanal">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Deja todos los días sin marcar para heredar el horario del establecimiento.</p>
+        <div class="week-grid" id="svcWeekGrid"></div>
+      </div>
+
+      <!-- Fechas concretas -->
+      <div id="svcHorarioEspecifico" style="display:none">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">El servicio solo estará disponible en las fechas que añadas.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <input type="date" id="svcFechaInput" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+          <button type="button" class="btn-secondary btn-sm" onclick="addSvcFecha()">+ Añadir fecha</button>
+        </div>
+        <div id="svcFechasList" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="form-group" style="margin:0;flex:1">
+            <label>Hora inicio</label>
+            <input type="time" id="svcEspInicio" value="10:00" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+          </div>
+          <div class="form-group" style="margin:0;flex:1">
+            <label>Hora fin</label>
+            <input type="time" id="svcEspFin" value="20:00" style="width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('svcModal')">Cancelar</button>
+      <button class="btn-primary" onclick="saveService()">Guardar servicio</button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast -->
 <div id="toast"></div>
@@ -1009,6 +1231,30 @@ function showAdminApp() {
 // Si están definidas aquí, no hace falta configurar nada al entrar al admin.
 // Cámbialo si alguna vez rotas las claves en Supabase.
 const DEFAULT_SB_URL = 'https://ritjspwzwllptwqmeqwh.supabase.co';
+
+const ICONS = {
+  building:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-4h6v4"/></svg>`,
+  calendar:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  settings:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>`,
+  package:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+  search:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  code:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+  users:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  user:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  userOff:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 17.5L22 22M2 21v-2a4 4 0 0 1 3.25-3.93"/><circle cx="10" cy="8" r="4"/><path d="M10.29 15.02A4 4 0 0 1 14 19v2"/></svg>`,
+  edit:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  trash:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+  pause:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,
+  play:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+  globe:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  buildingLg: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-4h6v4"/></svg>`,
+  calendarLg: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  utensils:   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
+  droplet:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+  hotelMd:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-4h6v4"/></svg>`,
+  spaPreview: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+  restPreview:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
+};
 const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdGpzcHd6d2xscHR3cW1lcXdoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDI3MDkwNCwiZXhwIjoyMDg5ODQ2OTA0fQ.OWdzA9DKDBZ1co6_Wp6HAPUiLT45TJXhSehf7YCBk6M';
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -1095,6 +1341,7 @@ function showTab(name, btn) {
   document.querySelectorAll('nav.sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name === 'servicios') { refreshSvcEstFilter(); loadServices(''); }
   if (name === 'inventario') refreshInvEstSelect();
   if (name === 'reservas') { refreshBkEstSelect(); setDefaultDateRange(); }
   closeSidebar();
@@ -1111,6 +1358,8 @@ async function loadEstablishments() {
     renderEstTable();
     refreshInvEstSelect();
     refreshBkEstSelect();
+    refreshSvcEstFilter();
+    await loadAllServices();
   } catch (e) {
     showToast(e.message, 'error');
   }
@@ -1119,7 +1368,7 @@ async function loadEstablishments() {
 function renderEstTable() {
   const tbody = document.getElementById('estTbody');
   if (!establishments.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">🏨</div><p>No hay establecimientos. ¡Crea el primero!</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">${ICONS.buildingLg}</div><p>No hay establecimientos. ¡Crea el primero!</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = establishments.map(e => `
@@ -1132,32 +1381,31 @@ function renderEstTable() {
       <td><span class="badge ${e.activo ? 'badge-green' : 'badge-gray'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
       <td>
         <div class="flex">
-          <button class="btn-secondary btn-sm" onclick="showEmbedCode('${e.id}','${e.nombre}')">📋 Embed</button>
-          <button class="btn-secondary btn-sm" onclick="openOwnersModal('${e.id}','${e.nombre}')">👤 Dueños</button>
-          <button class="btn-secondary btn-sm" onclick="editEst('${e.id}')">✏️</button>
-          <button class="btn-danger btn-sm" onclick="toggleActive('${e.id}',${e.activo})">${e.activo ? '⏸' : '▶'}</button>
-          <button class="btn-danger btn-sm" onclick="deleteEst('${e.id}','${e.nombre}')">🗑</button>
+          <button class="btn-secondary btn-sm" onclick="openOwnersModal('${e.id}','${e.nombre}')" title="Dueños">${ICONS.users} Dueños</button>
+          <button class="btn-secondary btn-sm" onclick="editEst('${e.id}')" title="Editar">${ICONS.edit}</button>
+          <button class="btn-danger btn-sm" onclick="toggleActive('${e.id}',${e.activo})" title="${e.activo ? 'Pausar' : 'Activar'}">${e.activo ? ICONS.pause : ICONS.play}</button>
+          <button class="btn-danger btn-sm" onclick="deleteEst('${e.id}','${e.nombre}')" title="Eliminar">${ICONS.trash}</button>
         </div>
       </td>
     </tr>
   `).join('');
 }
 
-let _currentEmbedId = null;
+let _currentEmbedSlug = null;
 
-function showEmbedCode(id, nombre) {
-  _currentEmbedId = id;
+function showEmbedCode(slug, nombre) {
+  _currentEmbedSlug = slug;
   const widgetUrl = window.location.origin + window.location.pathname.replace('admin.html', 'widget-reservas.js');
   const code = `<!-- Widget de reservas: ${nombre} -->
 <div id="hotel-reservas"></div>
-<script src="${widgetUrl}?id=${id}"><\/script>`;
+<script src="${widgetUrl}?service_slug=${slug}"><\/script>`;
   document.getElementById('embedCode').textContent = code;
   openModal('embedModal');
 }
 
 function openPreview() {
-  if (!_currentEmbedId) return;
-  window.open('preview.html?id=' + _currentEmbedId, '_blank');
+  if (!_currentEmbedSlug) return;
+  window.open('preview.html?service_slug=' + _currentEmbedSlug, '_blank');
 }
 
 function copyEmbed() {
@@ -1333,6 +1581,302 @@ function autoSlug(fromNombre) {
     .replace(/^-+|-+$/g, '');
   document.getElementById('estSlug').value = slug;
 }
+
+// ── Tipo horario toggle ──
+function switchTipoHorario(tipo) {
+  document.getElementById('svcHorarioSemanal').style.display   = tipo === 'semanal'    ? '' : 'none';
+  document.getElementById('svcHorarioEspecifico').style.display = tipo === 'especifico' ? '' : 'none';
+  document.getElementById('tipoSemanal').style.borderColor    = tipo === 'semanal'    ? 'var(--accent)' : 'var(--border)';
+  document.getElementById('tipoEspecifico').style.borderColor = tipo === 'especifico' ? 'var(--accent)' : 'var(--border)';
+}
+
+let _svcFechas = [];
+
+function addSvcFecha() {
+  const val = document.getElementById('svcFechaInput').value;
+  if (!val || _svcFechas.includes(val)) return;
+  _svcFechas.push(val);
+  _svcFechas.sort();
+  renderSvcFechas();
+  document.getElementById('svcFechaInput').value = '';
+}
+
+function removeSvcFecha(fecha) {
+  _svcFechas = _svcFechas.filter(f => f !== fecha);
+  renderSvcFechas();
+}
+
+function renderSvcFechas() {
+  document.getElementById('svcFechasList').innerHTML = _svcFechas.map(f =>
+    `<span style="background:#e8f0fe;border-radius:20px;padding:4px 10px;font-size:12px;display:flex;align-items:center;gap:6px">
+      ${f}
+      <button type="button" onclick="removeSvcFecha('${f}')" style="background:none;border:none;cursor:pointer;color:#666;font-size:14px;line-height:1;padding:0">×</button>
+    </span>`
+  ).join('');
+}
+
+function autoSvcSlug() {
+  const nombre = document.getElementById('svcNombre').value;
+  const slug = nombre.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  document.getElementById('svcSlug').value = slug;
+}
+
+// ══════════════════════════════════════
+// SERVICIOS
+// ══════════════════════════════════════
+let allServices = []; // cache global de todos los servicios
+
+async function loadAllServices() {
+  try {
+    allServices = await sbFetch('/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,activo,intervalo_min,horario,tipo_horario,fechas_especificas,establishment_id,establishments(nombre)&order=establishment_id.asc,nombre.asc');
+  } catch (e) {
+    allServices = [];
+  }
+}
+
+async function loadServices(estId) {
+  let path = '/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,foto_url,activo,intervalo_min,horario,tipo_horario,fechas_especificas,descripcion,establishment_id,establishments(nombre)&order=nombre.asc';
+  if (estId) path += `&establishment_id=eq.${estId}`;
+  try {
+    const data = await sbFetch(path);
+    allServices = estId ? allServices.filter(s => s.establishment_id !== estId).concat(data) : data;
+    renderServicesTable(data);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function refreshSvcEstFilter() {
+  const sel = document.getElementById('svcEstFilter');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Todos —</option>' +
+    establishments.map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${e.nombre}</option>`).join('');
+}
+
+function renderServicesTable(services) {
+  const tbody = document.getElementById('svcTbody');
+  if (!services || !services.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg></div><p>Sin servicios. ¡Crea el primero!</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = services.map(s => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:${s.color_accent||'#0e4159'};flex-shrink:0"></div>
+          <strong>${s.nombre}</strong>
+        </div>
+      </td>
+      <td>${s.establishments ? s.establishments.nombre : '—'}</td>
+      <td><code style="font-size:11px">${s.slug}</code></td>
+      <td>${s.duracion ? s.duracion + ' min' : '—'}</td>
+      <td>${s.aforo_max}</td>
+      <td>${s.precio != null ? Number(s.precio).toLocaleString('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:0}) : '—'}</td>
+      <td><span class="badge ${s.activo ? 'badge-green' : 'badge-gray'}">${s.activo ? 'Activo' : 'Inactivo'}</span></td>
+      <td>
+        <div class="flex">
+          <button class="btn-secondary btn-sm" onclick="showEmbedCode('${s.slug}','${s.nombre.replace(/'/g,"\\'")}')" title="Embed">${ICONS.code} Embed</button>
+          <button class="btn-secondary btn-sm" onclick="editService('${s.id}')" title="Editar">${ICONS.edit}</button>
+          <button class="btn-danger btn-sm" onclick="toggleServiceActive('${s.id}',${s.activo})" title="${s.activo ? 'Pausar' : 'Activar'}">${s.activo ? ICONS.pause : ICONS.play}</button>
+          <button class="btn-danger btn-sm" onclick="deleteService('${s.id}','${s.nombre.replace(/'/g,"\\'")}')" title="Eliminar">${ICONS.trash}</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openServiceModal() {
+  document.getElementById('svcId').value = '';
+  document.getElementById('svcModalTitle').textContent = 'Nuevo servicio';
+  document.getElementById('svcNombre').value = '';
+  document.getElementById('svcSlug').value = '';
+  document.getElementById('svcDuracion').value = 60;
+  document.getElementById('svcAforo').value = 10;
+  document.getElementById('svcPrecio').value = '';
+  document.getElementById('svcIntervalo').value = 60;
+  document.getElementById('svcColor').value = '#0e4159';
+  document.getElementById('svcColorPicker').value = '#0e4159';
+  document.getElementById('svcColorSec').value = '#f6f3f1';
+  document.getElementById('svcColorSecPicker').value = '#f6f3f1';
+  document.getElementById('svcFotoUrl').value = '';
+  previewSvcFoto('');
+  document.getElementById('svcDesc').value = '';
+  // Reset tipo horario
+  document.querySelector('input[name="svcTipoHorario"][value="semanal"]').checked = true;
+  switchTipoHorario('semanal');
+  _svcFechas = [];
+  renderSvcFechas();
+  document.getElementById('svcEspInicio').value = '10:00';
+  document.getElementById('svcEspFin').value = '20:00';
+  // Populate establishment select
+  const sel = document.getElementById('svcEstId');
+  sel.innerHTML = establishments.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+  buildSvcWeekGrid({});
+  openModal('svcModal');
+}
+
+function editService(id) {
+  const svc = allServices.find(s => s.id === id);
+  if (!svc) { showToast('Servicio no encontrado', 'error'); return; }
+  document.getElementById('svcId').value = svc.id;
+  document.getElementById('svcModalTitle').textContent = 'Editar: ' + svc.nombre;
+  document.getElementById('svcNombre').value = svc.nombre;
+  document.getElementById('svcSlug').value = svc.slug;
+  document.getElementById('svcDuracion').value = svc.duracion || 60;
+  document.getElementById('svcAforo').value = svc.aforo_max || 10;
+  document.getElementById('svcPrecio').value = svc.precio != null ? svc.precio : '';
+  document.getElementById('svcIntervalo').value = svc.intervalo_min || 60;
+  document.getElementById('svcColor').value = svc.color_accent || '#0e4159';
+  document.getElementById('svcColorPicker').value = isValidHex(svc.color_accent) ? svc.color_accent : '#0e4159';
+  document.getElementById('svcColorSec').value = svc.color_secondary || '#f6f3f1';
+  document.getElementById('svcColorSecPicker').value = isValidHex(svc.color_secondary) ? svc.color_secondary : '#f6f3f1';
+  document.getElementById('svcFotoUrl').value = svc.foto_url || '';
+  previewSvcFoto(svc.foto_url || '');
+  document.getElementById('svcDesc').value = svc.descripcion || '';
+  // Tipo horario — detectado desde horario.tipo
+  const h = svc.horario || {};
+  const tipo = h.tipo === 'especifico' ? 'especifico' : 'semanal';
+  document.querySelector(`input[name="svcTipoHorario"][value="${tipo}"]`).checked = true;
+  switchTipoHorario(tipo);
+  if (tipo === 'especifico') {
+    _svcFechas = h.fechas || [];
+    renderSvcFechas();
+    document.getElementById('svcEspInicio').value = h.apertura || '10:00';
+    document.getElementById('svcEspFin').value = h.cierre || '20:00';
+  } else {
+    _svcFechas = [];
+    renderSvcFechas();
+    buildSvcWeekGrid(svc.horario || {});
+  }
+  const sel = document.getElementById('svcEstId');
+  sel.innerHTML = establishments.map(e => `<option value="${e.id}" ${e.id===svc.establishment_id?'selected':''}>${e.nombre}</option>`).join('');
+  openModal('svcModal');
+}
+
+function buildSvcWeekGrid(horario = {}) {
+  const grid = document.getElementById('svcWeekGrid');
+  grid.innerHTML = DAYS.map((day, i) => {
+    const key = DAY_KEYS[i];
+    const h = horario[key] || null;
+    const closed = !h;
+    const apertura = h ? (Array.isArray(h) ? h[0] : h.apertura) : '10:00';
+    const cierre   = h ? (Array.isArray(h) ? h[1] : h.cierre)   : '20:00';
+    return `
+    <div class="day-block">
+      <div class="day-name">${day.slice(0,3)}</div>
+      <input type="time" id="svc_${key}_open" value="${apertura}" ${closed ? 'disabled' : ''}>
+      <input type="time" id="svc_${key}_close" value="${cierre}" ${closed ? 'disabled' : ''}>
+      <label class="closed">
+        <input type="checkbox" id="svc_${key}_closed" ${closed ? 'checked' : ''} onchange="toggleSvcDayClosed('${key}',this.checked)">
+        Heredar
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function toggleSvcDayClosed(key, isClosed) {
+  document.getElementById('svc_' + key + '_open').disabled = isClosed;
+  document.getElementById('svc_' + key + '_close').disabled = isClosed;
+}
+
+function getSvcHorarioFromForm() {
+  const h = {};
+  DAY_KEYS.forEach(key => {
+    const closed = document.getElementById('svc_' + key + '_closed').checked;
+    if (!closed) {
+      h[key] = [
+        document.getElementById('svc_' + key + '_open').value,
+        document.getElementById('svc_' + key + '_close').value
+      ];
+    }
+  });
+  return Object.keys(h).length ? h : null;
+}
+
+function buildSvcHorarioPayload() {
+  const tipo = document.querySelector('input[name="svcTipoHorario"]:checked').value;
+  if (tipo === 'especifico') {
+    return {
+      horario: {
+        tipo: 'especifico',
+        apertura: document.getElementById('svcEspInicio').value,
+        cierre:   document.getElementById('svcEspFin').value,
+        fechas:   [..._svcFechas],
+      },
+    };
+  }
+  return { horario: getSvcHorarioFromForm() };
+}
+
+async function saveService() {
+  const id = document.getElementById('svcId').value;
+  const nombre = document.getElementById('svcNombre').value.trim();
+  const slug = document.getElementById('svcSlug').value.trim();
+  const estId = document.getElementById('svcEstId').value;
+  if (!nombre || !slug || !estId) { showToast('Nombre, slug y establecimiento son obligatorios', 'error'); return; }
+
+  const precioVal = document.getElementById('svcPrecio').value;
+  const payload = {
+    establishment_id: estId,
+    nombre,
+    slug,
+    descripcion: document.getElementById('svcDesc').value.trim() || null,
+    duracion: parseInt(document.getElementById('svcDuracion').value) || 60,
+    aforo_max: parseInt(document.getElementById('svcAforo').value) || 10,
+    precio: precioVal !== '' ? parseFloat(precioVal) : null,
+    intervalo_min: parseInt(document.getElementById('svcIntervalo').value) || 60,
+    color_accent: document.getElementById('svcColor').value || '#0e4159',
+    color_secondary: document.getElementById('svcColorSec').value || '#f6f3f1',
+    foto_url: document.getElementById('svcFotoUrl').value.trim() || null,
+    ...buildSvcHorarioPayload(),
+  };
+
+  try {
+    if (id) {
+      await sbFetch('/services?id=eq.' + id, { method: 'PATCH', body: JSON.stringify(payload) });
+      showToast('Servicio actualizado ✓');
+    } else {
+      payload.id = crypto.randomUUID();
+      payload.activo = true;
+      payload.created_at = new Date().toISOString();
+      await sbFetch('/services', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('Servicio creado ✓');
+    }
+    closeModal('svcModal');
+    await loadAllServices();
+    const filterEst = document.getElementById('svcEstFilter').value;
+    loadServices(filterEst);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function deleteService(id, nombre) {
+  if (!confirm(`¿Eliminar el servicio "${nombre}"?\n\nSe borrarán también su inventario personalizado. Las reservas existentes no se borran.`)) return;
+  try {
+    await sbFetch('/services?id=eq.' + id, { method: 'DELETE' });
+    showToast('Servicio eliminado');
+    await loadAllServices();
+    loadServices(document.getElementById('svcEstFilter').value);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function toggleServiceActive(id, current) {
+  try {
+    await sbFetch('/services?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ activo: !current }) });
+    showToast(current ? 'Servicio desactivado' : 'Servicio activado');
+    await loadAllServices();
+    loadServices(document.getElementById('svcEstFilter').value);
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
 document.getElementById('estNombre').addEventListener('input', () => {
   if (!document.getElementById('estId').value) autoSlug(true);
   updateLogoPreview();
@@ -1406,11 +1950,11 @@ async function loadOwnersList() {
       const o = l.owners;
       return `
       <div class="slot-item">
-        <span style="font-size:18px">${o.activo ? '👤' : '🚫'}</span>
+        <span style="color:var(--text-muted)">${o.activo ? ICONS.user : ICONS.userOff}</span>
         <span class="slot-time" style="min-width:140px">${o.nombre}</span>
         <span class="slot-aforo">${o.email}</span>
         <span class="badge ${o.activo ? 'badge-green' : 'badge-gray'}">${o.activo ? 'Activo' : 'Inactivo'}</span>
-        <button class="btn-secondary btn-sm" onclick="toggleOwner('${o.id}',${o.activo})">${o.activo ? '⏸' : '▶'}</button>
+        <button class="btn-secondary btn-sm" onclick="toggleOwner('${o.id}',${o.activo})">${o.activo ? ICONS.pause : ICONS.play}</button>
         <button class="btn-danger btn-sm" onclick="unlinkOwner('${o.id}','${o.nombre}')">✕ Desvincular</button>
       </div>`;
     }).join('');
@@ -1480,6 +2024,7 @@ async function unlinkOwner(ownerId, nombre) {
 // INVENTARIO
 // ══════════════════════════════════════
 let invEstId = null;
+let invSvcId = null;
 let invYear = new Date().getFullYear();
 let invMonth = new Date().getMonth(); // 0-indexed
 let invOverrides = [];
@@ -1492,10 +2037,29 @@ function refreshInvEstSelect() {
     establishments.map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${e.nombre}</option>`).join('');
 }
 
+function onInvEstChange() {
+  const estId = document.getElementById('invEstSelect').value;
+  invEstId = estId;
+  invSvcId = null;
+  const svcSel = document.getElementById('invSvcSelect');
+  if (!estId) {
+    svcSel.innerHTML = '<option value="">— Selecciona establecimiento —</option>';
+    svcSel.disabled = true;
+    document.getElementById('invCalendar').style.display = 'none';
+    document.getElementById('invEmpty').style.display = 'block';
+    return;
+  }
+  const estServices = allServices.filter(s => s.establishment_id === estId && s.activo);
+  svcSel.disabled = false;
+  svcSel.innerHTML = '<option value="">— Selecciona servicio —</option>' +
+    estServices.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+  document.getElementById('invCalendar').style.display = 'none';
+  document.getElementById('invEmpty').style.display = 'block';
+}
+
 async function loadInventario() {
-  const sel = document.getElementById('invEstSelect');
-  invEstId = sel.value;
-  if (!invEstId) {
+  invSvcId = document.getElementById('invSvcSelect').value;
+  if (!invSvcId) {
     document.getElementById('invCalendar').style.display = 'none';
     document.getElementById('invEmpty').style.display = 'block';
     return;
@@ -1511,7 +2075,7 @@ async function fetchMonthOverrides() {
   const lastDay = new Date(invYear, invMonth+1, 0).getDate();
   const to = `${invYear}-${String(invMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
   try {
-    invOverrides = await sbFetch(`/inventory?establishment_id=eq.${invEstId}&fecha=gte.${from}&fecha=lte.${to}&select=*&order=fecha.asc,hora.asc`);
+    invOverrides = await sbFetch(`/inventory_custom?service_id=eq.${invSvcId}&fecha=gte.${from}&fecha=lte.${to}&select=*&order=fecha.asc,hora.asc`);
   } catch (e) {
     invOverrides = [];
     showToast(e.message, 'error');
@@ -1571,40 +2135,81 @@ function renderDaySlots(dateStr) {
   }
   container.innerHTML = dayOverrides.map(o => `
     <div class="slot-item">
-      <span class="slot-time">${o.hora ? o.hora.slice(0,5) : '🌍 Todo el día'}</span>
-      <span class="slot-aforo">Aforo máx: <strong>${o.aforo_maximo}</strong>${o.aforo_maximo === 0 ? ' <span class="badge badge-gray">Cerrado</span>' : ''}</span>
-      <span class="text-muted" style="font-size:11px">${o.motivo || ''}</span>
-      <button class="btn-danger btn-sm" onclick="deleteOverride('${o.id}','${dateStr}')">🗑</button>
+      <span class="slot-time">${o.hora ? o.hora.slice(0,5) : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Todo el día`}</span>
+      <span class="slot-aforo">Aforo: <strong>${o.aforo_disponible}</strong>${o.aforo_disponible === 0 ? ' <span class="badge badge-gray">Cerrado</span>' : ''}</span>
+      <button class="btn-danger btn-sm" onclick="deleteOverride('${o.id}','${dateStr}')" title="Eliminar">${ICONS.trash}</button>
     </div>
   `).join('');
+}
+
+function buildSlotHoraOptions(svcId, dateStr, selectEl) {
+  const svc = allServices.find(s => s.id === svcId);
+  const slots = generateServiceSlots(svc, dateStr);
+  selectEl.innerHTML = '<option value="">— Todo el día —</option>' +
+    slots.map(h => `<option value="${h}">${h.slice(0,5)}</option>`).join('');
+}
+
+function generateServiceSlots(svc, dateStr) {
+  if (!svc || !svc.horario) return [];
+  const h = svc.horario;
+  let startStr, endStr;
+  if (h.tipo === 'especifico') {
+    if (!(h.fechas || []).includes(dateStr)) return [];
+    startStr = h.apertura;
+    endStr   = h.cierre;
+  } else {
+    const dayMap = ['dom','lun','mar','mie','jue','vie','sab'];
+    const d = new Date(dateStr + 'T12:00:00Z');
+    const dayKey = dayMap[d.getUTCDay()];
+    const horario = h[dayKey];
+    if (!horario) return [];
+    [startStr, endStr] = horario;
+  }
+  const [sh, sm] = startStr.split(':').map(Number);
+  const [eh, em] = endStr.split(':').map(Number);
+  const interval = svc.intervalo_min || 60;
+  const slots = [];
+  let cur = sh * 60 + sm;
+  const end = eh * 60 + em;
+  while (cur < end) {
+    const hh = String(Math.floor(cur / 60)).padStart(2, '0');
+    const mm = String(cur % 60).padStart(2, '0');
+    slots.push(hh + ':' + mm + ':00');
+    cur += interval;
+  }
+  return slots;
 }
 
 function openSlotModal() {
   if (!invSelectedDate) { showToast('Selecciona un día primero', 'error'); return; }
   document.getElementById('slotModalDate').textContent = 'Fecha: ' + invSelectedDate;
-  document.getElementById('slotHora').value = '';
+  buildSlotHoraOptions(invSvcId, invSelectedDate, document.getElementById('slotHora'));
   document.getElementById('slotAforo').value = '';
-  document.getElementById('slotMotivo').value = '';
   openModal('slotModal');
 }
 
 async function saveSlotOverride() {
-  const hora = document.getElementById('slotHora').value;
-  const aforo = document.getElementById('slotAforo').value;
-  const motivo = document.getElementById('slotMotivo').value.trim();
+  const horaRaw = document.getElementById('slotHora').value;
+  const aforo   = document.getElementById('slotAforo').value;
   if (aforo === '') { showToast('Aforo es obligatorio', 'error'); return; }
 
+  // El select ya devuelve HH:MM:SS o vacío (todo el día)
+  const hora = horaRaw || null;
+
   const payload = {
-    id: crypto.randomUUID(),
-    establishment_id: invEstId,
+    service_id: invSvcId,
     fecha: invSelectedDate,
-    hora: hora || null,
-    aforo_maximo: parseInt(aforo),
-    motivo: motivo || null
+    hora,
+    aforo_disponible: parseInt(aforo),
   };
   try {
-    await sbFetch('/inventory', { method: 'POST', body: JSON.stringify(payload) });
-    showToast('Override guardado ✓');
+    // Upsert: si ya existe (service_id+fecha+hora) lo actualiza
+    await sbFetch('/inventory_custom?on_conflict=service_id,fecha,hora', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(payload),
+    });
+    showToast('Aforo guardado ✓');
     closeModal('slotModal');
     await fetchMonthOverrides();
     renderCalendar();
@@ -1617,7 +2222,7 @@ async function saveSlotOverride() {
 async function deleteOverride(id, dateStr) {
   if (!confirm('¿Eliminar este override?')) return;
   try {
-    await sbFetch('/inventory?id=eq.' + id, { method: 'DELETE' });
+    await sbFetch('/inventory_custom?id=eq.' + id, { method: 'DELETE' });
     showToast('Eliminado');
     await fetchMonthOverrides();
     renderCalendar();
@@ -1639,6 +2244,19 @@ function refreshBkEstSelect() {
     establishments.map(e => `<option value="${e.id}" ${e.id===cur?'selected':''}>${e.nombre}</option>`).join('');
 }
 
+function onBkEstChange() {
+  const estId = document.getElementById('bkEstSelect').value;
+  const svcSel = document.getElementById('bkSvcSelect');
+  if (!estId) {
+    svcSel.innerHTML = '<option value="">— Todos —</option>';
+  } else {
+    const estSvcs = allServices.filter(s => s.establishment_id === estId);
+    svcSel.innerHTML = '<option value="">— Todos —</option>' +
+      estSvcs.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+  }
+  loadReservas();
+}
+
 function setDefaultDateRange() {
   const today = new Date();
   const from = new Date(today); from.setDate(1);
@@ -1649,11 +2267,13 @@ function setDefaultDateRange() {
 
 async function loadReservas() {
   const estId = document.getElementById('bkEstSelect').value;
+  const svcId = document.getElementById('bkSvcSelect').value;
   const from = document.getElementById('bkFrom').value;
   const to = document.getElementById('bkTo').value;
 
-  let path = '/bookings?select=*,establishments(nombre)&order=fecha.asc,hora.asc';
+  let path = '/bookings?select=*,establishments(nombre),services(nombre)&order=fecha.asc,hora.asc';
   if (estId) path += `&establishment_id=eq.${estId}`;
+  if (svcId) path += `&service_id=eq.${svcId}`;
   if (from) path += `&fecha=gte.${from}`;
   if (to) path += `&fecha=lte.${to}`;
 
@@ -1668,7 +2288,7 @@ async function loadReservas() {
 function renderReservasTable() {
   const tbody = document.getElementById('bkTbody');
   if (!bkData.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">📅</div><p>No hay reservas en este período</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">${ICONS.calendarLg}</div><p>No hay reservas en este período</p></div></td></tr>`;
     return;
   }
   const estadoColors = { confirmada:'badge-green', pendiente:'badge-amber', cancelada:'badge-gray' };
@@ -1679,7 +2299,8 @@ function renderReservasTable() {
       <td>${b.nombre}</td>
       <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
       <td style="text-align:center">${b.personas}</td>
-      <td>${b.establishments ? b.establishments.nombre : b.establishment_id.slice(0,8)+'…'}</td>
+      <td>${b.establishments ? b.establishments.nombre : (b.establishment_id ? b.establishment_id.slice(0,8)+'…' : '—')}</td>
+      <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${estadoColors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
       <td>
         <select onchange="updateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px;font-size:11px">
@@ -1717,6 +2338,89 @@ function exportCSV() {
 }
 
 // ══════════════════════════════════════
+// RESERVA MANUAL
+// ══════════════════════════════════════
+function openManualBkModal() {
+  const estSel = document.getElementById('manBkEst');
+  estSel.innerHTML = establishments.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+  document.getElementById('manBkSvc').innerHTML = '<option value="">— Selecciona establecimiento —</option>';
+  document.getElementById('manBkFecha').value = '';
+  document.getElementById('manBkHora').innerHTML = '<option value="">— Selecciona servicio y fecha —</option>';
+  document.getElementById('manBkPersonas').value = 1;
+  document.getElementById('manBkNombre').value = '';
+  document.getElementById('manBkEmail').value = '';
+  document.getElementById('manBkEstado').value = 'confirmada';
+  // Populate services for first establishment
+  if (establishments.length) loadManualBkServices();
+  document.getElementById('manualBkModal').classList.add('open');
+}
+
+function loadManualBkServices() {
+  const estId = document.getElementById('manBkEst').value;
+  const svcSel = document.getElementById('manBkSvc');
+  const estSvcs = allServices.filter(s => s.establishment_id === estId && s.activo);
+  svcSel.innerHTML = '<option value="">— Selecciona servicio —</option>' +
+    estSvcs.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+  document.getElementById('manBkHora').innerHTML = '<option value="">— Selecciona servicio y fecha —</option>';
+}
+
+async function fetchManualSlots() {
+  const svcId = document.getElementById('manBkSvc').value;
+  const fecha  = document.getElementById('manBkFecha').value;
+  const horaSel = document.getElementById('manBkHora');
+  if (!svcId || !fecha) return;
+  horaSel.innerHTML = '<option value="">Cargando…</option>';
+  horaSel.disabled = true;
+  try {
+    const res = await fetch(`https://vmi3024621.contaboserver.net/webhook/disponibilidad?service_id=${encodeURIComponent(svcId)}&fecha=${encodeURIComponent(fecha)}`);
+    const data = await res.json();
+    const slots = data.ok ? data.data : [];
+    if (!slots.length) {
+      horaSel.innerHTML = '<option value="">Sin slots disponibles</option>';
+    } else {
+      horaSel.innerHTML = '<option value="">— Elige hora —</option>' +
+        slots.map(s => {
+          const h = s.hora ? s.hora.slice(0,5) : '';
+          const plazas = s.plazas_libres != null ? ` (${s.plazas_libres} plazas)` : '';
+          return `<option value="${s.hora}">${h}${plazas}</option>`;
+        }).join('');
+    }
+  } catch {
+    horaSel.innerHTML = '<option value="">Error al cargar slots</option>';
+  }
+  horaSel.disabled = false;
+}
+
+async function saveManualBk() {
+  const nombre   = document.getElementById('manBkNombre').value.trim();
+  const email    = document.getElementById('manBkEmail').value.trim();
+  const fecha    = document.getElementById('manBkFecha').value;
+  const hora     = document.getElementById('manBkHora').value;
+  const personas = parseInt(document.getElementById('manBkPersonas').value) || 1;
+  const estado   = document.getElementById('manBkEstado').value;
+  const service_id = document.getElementById('manBkSvc').value;
+  const establishment_id = document.getElementById('manBkEst').value;
+  if (!nombre || !email || !fecha || !hora || !service_id) {
+    showToast('Selecciona servicio, fecha, hora y rellena los datos del cliente'); return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Email inválido'); return;
+  }
+  const btn = document.getElementById('manBkSaveBtn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await sbFetch('/bookings', {
+      method: 'POST',
+      body: JSON.stringify({ establishment_id, service_id, nombre, email, fecha, hora: hora.length === 5 ? hora + ':00' : hora, personas, estado })
+    });
+    closeModal('manualBkModal');
+    showToast('Reserva creada ✓');
+    loadReservas();
+  } catch (e) { showToast('Error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Crear reserva'; }
+}
+
+// ══════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1742,6 +2446,18 @@ function syncColor(src, targetId, reverse = false) {
 
 function isValidHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v); }
 
+function previewSvcFoto(url) {
+  const wrap = document.getElementById('svcFotoPreview');
+  const img  = document.getElementById('svcFotoImg');
+  if (url && url.startsWith('http')) {
+    img.src = url;
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+    img.src = '';
+  }
+}
+
 function previewLogo(url) {
   const img = document.getElementById('logoPreviewImg');
   const emoji = document.getElementById('logoPreviewEmoji');
@@ -1765,7 +2481,7 @@ function updateLogoPreview() {
   const emojiEl = document.getElementById('logoPreviewEmoji');
   if (nameEl) nameEl.textContent = nombre;
   if (headerEl && isValidHex(color)) headerEl.style.background = color;
-  if (emojiEl) emojiEl.textContent = tipo === 'restaurante' ? '🍽' : '♨';
+  if (emojiEl) emojiEl.innerHTML = tipo === 'restaurante' ? ICONS.restPreview : ICONS.spaPreview;
 }
 
 // Close modal on backdrop click

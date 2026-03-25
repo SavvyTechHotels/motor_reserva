@@ -5,16 +5,19 @@
   const API_BASE = 'https://vmi3024621.contaboserver.net/webhook';
 
   const _scriptEl = document.currentScript || document.querySelector('script[src*="widget-reservas"]');
-  let ESTABLISHMENT_ID = null;
+  let SERVICE_SLUG = null;
   try {
     const _u = new URL(_scriptEl ? _scriptEl.src : '');
-    ESTABLISHMENT_ID = _u.searchParams.get('id');
+    SERVICE_SLUG = _u.searchParams.get('service_slug');
   } catch {}
 
   /* ─── Config del establecimiento ─────────────────────────────────── */
   let config = {
+    service_id: null,
     nombre: '',
-    tipo: 'spa',
+    establishment_nombre: '',
+    duracion: null,
+    precio: null,
     color_primary: '#0e4159',
     color_accent:  '#0e4159',
     color_secondary: '#f6f3f1',
@@ -383,7 +386,7 @@
 
   /* ─── API ────────────────────────────────────────────────────────── */
   async function fetchConfig() {
-    const url = `${API_BASE}/config?establishment_id=${encodeURIComponent(ESTABLISHMENT_ID)}`;
+    const url = `${API_BASE}/config?service_slug=${encodeURIComponent(SERVICE_SLUG)}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo cargar la configuración');
@@ -391,7 +394,7 @@
   }
 
   async function fetchSlots(fecha) {
-    const url = `${API_BASE}/disponibilidad?establishment_id=${encodeURIComponent(ESTABLISHMENT_ID)}&fecha=${encodeURIComponent(fecha)}`;
+    const url = `${API_BASE}/disponibilidad?service_id=${encodeURIComponent(config.service_id)}&fecha=${encodeURIComponent(fecha)}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
@@ -402,7 +405,7 @@
     const res = await fetch(`${API_BASE}/reserva`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, establishment_id: ESTABLISHMENT_ID }),
+      body: JSON.stringify({ ...payload, service_id: config.service_id }),
     });
     const text = await res.text();
     let data = {};
@@ -422,7 +425,12 @@
   }
   function formatHora(h) { return h ? h.slice(0, 5) : ''; }
   function minDate() { return new Date().toISOString().split('T')[0]; }
-  function tipoLabel() { return config.tipo === 'restaurante' ? '🍽 Restaurante' : '♨ Spa'; }
+  function serviceMeta() {
+    const parts = [];
+    if (config.duracion) parts.push(config.duracion + ' min');
+    if (config.precio != null) parts.push(config.precio.toLocaleString('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }) + '/persona');
+    return parts.join(' · ');
+  }
 
   /* ─── Render ─────────────────────────────────────────────────────── */
   function applyColors() {
@@ -442,11 +450,12 @@
       .map(n => `<div class="hr-step-dot ${state.step >= n ? 'active' : ''}"></div>`)
       .join('');
 
+    const meta = serviceMeta();
     const headerText = {
-      1: { title: config.nombre || 'Reservas', sub: 'Selecciona una fecha' },
+      1: { title: config.nombre || 'Reservas', sub: meta || 'Selecciona una fecha' },
       2: { title: 'Elige tu hora', sub: formatFecha(state.fecha) },
       3: { title: 'Tus datos', sub: `${formatFecha(state.fecha)} · ${formatHora(state.hora)}` },
-      4: { title: '¡Reserva confirmada!', sub: `${config.nombre} — Te esperamos` },
+      4: { title: '¡Reserva confirmada!', sub: `${config.establishment_nombre || config.nombre} — Te esperamos` },
     }[state.step];
 
     const logoHtml = config.logo_url
@@ -462,7 +471,7 @@
             <p>${headerText.sub}</p>
           </div>
         </div>
-        ${state.step < 4 ? `<div class="hr-tipo-badge">${tipoLabel()}</div>` : ''}
+        ${state.step < 4 && config.establishment_nombre ? `<div class="hr-tipo-badge">${config.establishment_nombre}</div>` : ''}
         <div class="hr-steps">${stepDots}</div>
       </div>
       <div class="hr-body">
@@ -563,7 +572,8 @@
         <h3>¡Todo listo!</h3>
         <p>Hemos enviado la confirmación a<br><strong>${state.email}</strong></p>
         <div class="hr-resumen">
-          <div class="hr-resumen-row"><span>Establecimiento</span><span>${config.nombre}</span></div>
+          ${config.establishment_nombre ? `<div class="hr-resumen-row"><span>Establecimiento</span><span>${config.establishment_nombre}</span></div>` : ''}
+          <div class="hr-resumen-row"><span>Servicio</span><span>${config.nombre}</span></div>
           <div class="hr-resumen-row"><span>Fecha</span><span>${formatFecha(state.fecha)}</span></div>
           <div class="hr-resumen-row"><span>Hora</span><span>${formatHora(state.hora)}</span></div>
           <div class="hr-resumen-row"><span>Personas</span><span>${state.personas}</span></div>
@@ -689,8 +699,8 @@
     }
     container.classList.add('hr-widget');
 
-    if (!ESTABLISHMENT_ID) {
-      container.innerHTML = `<div class="hr-init-error">⚠️ Falta el parámetro <code>?id=</code> en la URL del script.</div>`;
+    if (!SERVICE_SLUG) {
+      container.innerHTML = `<div class="hr-init-error">⚠️ Falta el parámetro <code>?service_slug=</code> en la URL del script.</div>`;
       return;
     }
 
@@ -716,12 +726,16 @@
 
     try {
       const cfg = await fetchConfig();
-      config.nombre          = cfg.nombre || '';
-      config.tipo            = cfg.tipo || 'spa';
-      config.color_primary   = (cfg.config && cfg.config.color_primary)   || '#0e4159';
-      config.color_accent    = (cfg.config && cfg.config.color_accent)     || (cfg.config && cfg.config.color_primary) || '#0e4159';
-      config.color_secondary = (cfg.config && cfg.config.color_secondary)  || '#f6f3f1';
-      config.logo_url        = (cfg.config && cfg.config.logo_url)         || '';
+      config.service_id          = cfg.service_id || null;
+      config.nombre              = cfg.nombre || '';
+      config.establishment_nombre = cfg.establishment_nombre || '';
+      config.duracion            = cfg.duracion || null;
+      config.precio              = cfg.precio != null ? Number(cfg.precio) : null;
+      config.color_primary       = cfg.color_accent    || (cfg.config && cfg.config.color_primary)   || '#0e4159';
+      config.color_accent        = cfg.color_accent    || (cfg.config && cfg.config.color_accent)     || (cfg.config && cfg.config.color_primary) || '#0e4159';
+      config.color_secondary     = cfg.color_secondary || (cfg.config && cfg.config.color_secondary)  || '#f6f3f1';
+      config.logo_url            = (cfg.config && cfg.config.logo_url) || '';
+      config.foto_url            = cfg.foto_url || '';
     } catch (e) {
       container.innerHTML = `<div class="hr-init-error">No se pudo cargar el widget.<br><small>${e.message}</small></div>`;
       return;

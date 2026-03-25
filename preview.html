@@ -40,21 +40,21 @@
 <body>
   <div id="hotel-reservas"></div>
   <div id="no-id" style="display:none">
-    <p>Añade <code>?id=ESTABLISHMENT_ID</code> a la URL para previsualizar un widget.</p>
+    <p>Añade <code>?service_slug=SLUG_DEL_SERVICIO</code> a la URL para previsualizar un widget.</p>
   </div>
   <script>
-    const id = new URLSearchParams(window.location.search).get('id');
-    if (!id) {
+    const slug = new URLSearchParams(window.location.search).get('service_slug');
+    if (!slug) {
       document.getElementById('hotel-reservas').style.display = 'none';
       document.getElementById('no-id').style.display = 'block';
     }
   </script>
   <script id="widget-script"></script>
   <script>
-    const id2 = new URLSearchParams(window.location.search).get('id');
-    if (id2) {
+    const slug2 = new URLSearchParams(window.location.search).get('service_slug');
+    if (slug2) {
       const s = document.getElementById('widget-script');
-      s.src = 'widget-reservas.js?id=' + encodeURIComponent(id2);
+      s.src = 'widget-reservas.js?service_slug=' + encodeURIComponent(slug2);
     }
   </script>
 </body>
