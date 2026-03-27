@@ -328,8 +328,8 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 12px;
-      gap: 3px;
+      font-size: 11px;
+      gap: 2px;
       transition: background .15s;
       position: relative;
     }
@@ -702,20 +702,20 @@
         </div>
 
         <div id="invCalendar" style="display:none">
-          <div class="cal-header">
-            <button class="btn-icon" onclick="changeMonth(-1)">‹</button>
-            <h3 id="calTitle">—</h3>
-            <button class="btn-icon" onclick="changeMonth(1)">›</button>
-          </div>
-          <div class="cal-grid" id="calGrid"></div>
-
-          <div id="invDayDetail" class="mt-20" style="display:none">
+          <div id="invDayDetail" style="display:none;margin-bottom:20px">
             <div class="card-header">
               <span class="card-title" id="invDayTitle">Día seleccionado</span>
               <button class="btn-primary btn-sm" onclick="openSlotModal()">+ Modificar aforo</button>
             </div>
             <div class="slots-container" id="slotsContainer"></div>
           </div>
+          <div class="cal-header">
+            <button class="btn-icon" onclick="changeMonth(-1)">‹</button>
+            <h3 id="calTitle">—</h3>
+            <button class="btn-icon" onclick="changeMonth(1)">›</button>
+          </div>
+          <div class="cal-grid" id="calGrid" style="max-width:340px;margin:0 auto"></div>
+          <p id="calHint" style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:14px">Selecciona un día para ver o modificar su disponibilidad</p>
         </div>
         <div id="invEmpty" class="empty-state">
           <p>Selecciona establecimiento y servicio para gestionar el aforo</p>
@@ -1118,6 +1118,13 @@
         <div class="form-group form-full">
           <label>Descripción (opcional)</label>
           <input id="svcDesc" type="text" placeholder="Breve descripción del servicio">
+        </div>
+        <div class="form-group form-full">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none">
+            <input type="checkbox" id="svcSplitOccupancy" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+            <span>Desglosar ocupación por <strong>Adultos</strong> y <strong>Niños</strong></span>
+          </label>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px;padding-left:26px">Si está activo, el widget mostrará dos selectores en lugar del selector único de "Personas".</p>
         </div>
       </div>
       <div class="divider"></div>
@@ -1635,14 +1642,14 @@ let allServices = []; // cache global de todos los servicios
 
 async function loadAllServices() {
   try {
-    allServices = await sbFetch('/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,activo,intervalo_min,horario,tipo_horario,fechas_especificas,establishment_id,establishments(nombre)&order=establishment_id.asc,nombre.asc');
+    allServices = await sbFetch('/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,activo,intervalo_min,horario,tipo_horario,fechas_especificas,split_occupancy,establishment_id,establishments(nombre)&order=establishment_id.asc,nombre.asc');
   } catch (e) {
     allServices = [];
   }
 }
 
 async function loadServices(estId) {
-  let path = '/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,foto_url,activo,intervalo_min,horario,tipo_horario,fechas_especificas,descripcion,establishment_id,establishments(nombre)&order=nombre.asc';
+  let path = '/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,foto_url,activo,intervalo_min,horario,tipo_horario,fechas_especificas,descripcion,split_occupancy,establishment_id,establishments(nombre)&order=nombre.asc';
   if (estId) path += `&establishment_id=eq.${estId}`;
   try {
     const data = await sbFetch(path);
@@ -1709,6 +1716,7 @@ function openServiceModal() {
   document.getElementById('svcFotoUrl').value = '';
   previewSvcFoto('');
   document.getElementById('svcDesc').value = '';
+  document.getElementById('svcSplitOccupancy').checked = false;
   // Reset tipo horario
   document.querySelector('input[name="svcTipoHorario"][value="semanal"]').checked = true;
   switchTipoHorario('semanal');
@@ -1741,6 +1749,7 @@ function editService(id) {
   document.getElementById('svcFotoUrl').value = svc.foto_url || '';
   previewSvcFoto(svc.foto_url || '');
   document.getElementById('svcDesc').value = svc.descripcion || '';
+  document.getElementById('svcSplitOccupancy').checked = !!svc.split_occupancy;
   // Tipo horario — detectado desde horario.tipo
   const h = svc.horario || {};
   const tipo = h.tipo === 'especifico' ? 'especifico' : 'semanal';
@@ -1911,6 +1920,7 @@ async function saveService() {
     color_accent: document.getElementById('svcColor').value || '#0e4159',
     color_secondary: document.getElementById('svcColorSec').value || '#f6f3f1',
     foto_url: document.getElementById('svcFotoUrl').value.trim() || null,
+    split_occupancy: document.getElementById('svcSplitOccupancy').checked,
     ...buildSvcHorarioPayload(),
   };
 
@@ -2198,10 +2208,19 @@ function renderCalendar() {
   grid.innerHTML = html;
 }
 
+function formatFechaLarga(dateStr) {
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return `${d} de ${meses[m - 1]} de ${y}`;
+}
+
 async function selectInvDay(dateStr) {
   invSelectedDate = dateStr;
-  document.getElementById('invDayDetail').style.display = 'block';
-  document.getElementById('invDayTitle').textContent = 'Overrides para: ' + dateStr;
+  const detail = document.getElementById('invDayDetail');
+  detail.style.display = 'block';
+  document.getElementById('invDayTitle').textContent = formatFechaLarga(dateStr);
+  document.getElementById('calHint').style.display = 'none';
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   renderDaySlots(dateStr);
 }
 
@@ -2379,7 +2398,14 @@ function renderReservasTable() {
       <td>${b.nombre}</td>
       <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
       <td>${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
-      <td style="text-align:center">${b.personas}</td>
+      <td style="text-align:center">
+        ${(b.adultos != null)
+          ? `<span title="${b.personas} personas en total" style="cursor:default">
+               ${b.adultos}<small style="color:var(--text-muted);font-size:10px">A</small>
+               +${b.ninos ?? 0}<small style="color:var(--text-muted);font-size:10px">N</small>
+             </span>`
+          : b.personas}
+      </td>
       <td>${b.establishments ? b.establishments.nombre : (b.establishment_id ? b.establishment_id.slice(0,8)+'…' : '—')}</td>
       <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${estadoColors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
@@ -2407,9 +2433,9 @@ async function updateEstado(id, estado) {
 
 function exportCSV() {
   if (!bkData.length) { showToast('No hay datos para exportar', 'error'); return; }
-  const cols = ['fecha','hora','nombre','email','personas','estado','notas'];
+  const cols = ['fecha','hora','nombre','email','personas','adultos','ninos','estado','notas'];
   const header = cols.join(',');
-  const rows = bkData.map(b => cols.map(c => `"${(b[c]||'').toString().replace(/"/g,'""')}"`).join(','));
+  const rows = bkData.map(b => cols.map(c => `"${(b[c] != null ? b[c] : '').toString().replace(/"/g,'""')}"`).join(','));
   const csv = [header, ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
@@ -2562,7 +2588,7 @@ function updateLogoPreview() {
   const emojiEl = document.getElementById('logoPreviewEmoji');
   if (nameEl) nameEl.textContent = nombre;
   if (headerEl && isValidHex(color)) headerEl.style.background = color;
-  if (emojiEl) emojiEl.innerHTML = tipo === 'restaurante' ? ICONS.restPreview : ICONS.spaPreview;
+  if (emojiEl) emojiEl.innerHTML = tipo === 'restaurante' ? ICONS.restPreview : tipo === 'otro' ? ICONS.hotelMd : ICONS.spaPreview;
 }
 
 // Close modal on backdrop click

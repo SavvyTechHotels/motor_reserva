@@ -160,7 +160,7 @@
     .cal-header h3 { flex: 1; text-align: center; font-size: 15px; }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
     .cal-day-name { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 6px 0; text-transform: uppercase; }
-    .cal-cell { aspect-ratio: 1; border: 1px solid var(--border); border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; gap: 3px; transition: background .15s; }
+    .cal-cell { aspect-ratio: 1; border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; gap: 2px; transition: background .15s; }
     .cal-cell:hover { background: #f5ede4; border-color: var(--accent); }
     .cal-cell.empty { border-color: transparent; cursor: default; background: none; }
     .cal-cell.has-override { background: #fff3e0; border-color: #f0a050; }
@@ -254,37 +254,60 @@
     }
     .hamburger span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: all .25s; }
 
-    /* ── Widget cards ── */
-    .widget-card {
+    /* ── Service cards ── */
+    .svc-card {
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      margin-bottom: 14px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s, opacity .2s;
+    }
+    .svc-card:hover { box-shadow: 0 4px 24px rgba(14,65,89,.12); }
+    .svc-card.inactive { opacity: .6; }
+    .svc-card-header {
       display: flex;
-      align-items: flex-start;
-      gap: 16px;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
     }
-    .widget-card-dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      margin-top: 4px;
+    .svc-card-stripe {
+      width: 4px;
+      border-radius: 4px;
+      align-self: stretch;
       flex-shrink: 0;
+      min-height: 44px;
     }
-    .widget-card-body { flex: 1; min-width: 0; }
-    .widget-card-name { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
-    .widget-card-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
-    .widget-card-code {
-      background: #f4f1ee;
-      border-radius: 7px;
-      padding: 10px 14px;
-      font-family: monospace;
-      font-size: 11px;
-      color: var(--text);
-      word-break: break-all;
-      margin-bottom: 10px;
-      line-height: 1.6;
+    .svc-card-info { flex: 1; min-width: 0; }
+    .svc-card-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .svc-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Toggle switch */
+    .toggle-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; flex-shrink: 0; }
+    .toggle-switch input { display: none; }
+    .toggle-track { width: 40px; height: 22px; background: #d1d5db; border-radius: 11px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle-switch input:checked + .toggle-track { background: var(--success); }
+    .toggle-knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); transition: transform .2s; }
+    .toggle-switch input:checked + .toggle-track .toggle-knob { transform: translateX(18px); }
+    .toggle-label { font-size: 12px; font-weight: 600; color: #9ca3af; min-width: 42px; }
+    .toggle-switch input:checked ~ .toggle-label { color: var(--success); }
+
+    /* Pill row */
+    .svc-pills { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 20px 16px 38px; }
+    .svc-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 10px;
+      font-size: 12px; color: var(--text-muted); font-weight: 500;
     }
-    .widget-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .svc-pill svg { flex-shrink: 0; opacity: .7; }
+    .svc-card-footer {
+      padding: 10px 20px; border-top: 1px solid var(--border);
+      background: var(--bg); display: flex; gap: 8px; align-items: center;
+    }
+    .svc-slug { font-family: monospace; font-size: 11px; color: var(--text-muted); margin-left: auto; background: var(--border); padding: 3px 8px; border-radius: 5px; }
+
     .badge-inactive { background: #f0f0f0; color: #888; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
     .badge-active   { background: #e6f4ec; color: #27ae60; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
 
@@ -403,7 +426,7 @@
   <div class="layout">
     <nav class="sidebar" id="sidebar">
       <button class="active" onclick="showTab('config', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg> Mi establecimiento</button>
-      <button onclick="showTab('widgets', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Mis Widgets</button>
+      <button onclick="showTab('widgets', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Servicios</button>
       <button onclick="showTab('inventario', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> Inventario</button>
       <button onclick="showTab('reservas', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Reservas</button>
       <button onclick="showTab('cuenta', this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6M15.5 7.5l3 3"/></svg> Mi cuenta</button>
@@ -463,7 +486,9 @@
           </div>
           <div class="divider"></div>
           <p class="section-title">Horario semanal</p>
-          <div class="week-grid" id="ownerWeekGrid"></div>
+          <div style="overflow-x:auto;padding-bottom:4px;margin:0 -4px;padding:0 4px 4px">
+            <div class="week-grid" id="ownerWeekGrid" style="min-width:560px"></div>
+          </div>
         </div>
       </div>
 
@@ -471,9 +496,9 @@
       <div id="tab-widgets" class="tab-panel">
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Mis Widgets</span>
+            <span class="card-title">Servicios</span>
+            <span style="font-size:12px;color:var(--text-muted)">Activa o pausa cada servicio con el interruptor</span>
           </div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Copia el código de cada servicio y pégalo en tu web para que los clientes puedan hacer reservas.</p>
           <div id="ownerWidgetsList"></div>
         </div>
       </div>
@@ -493,19 +518,20 @@
             </div>
           </div>
           <div id="ownerCalWrap" style="display:none">
-            <div class="cal-header">
-              <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(-1)">‹</button>
-              <h3 id="ownerCalTitle">—</h3>
-              <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(1)">›</button>
-            </div>
-            <div class="cal-grid" id="ownerCalGrid"></div>
-            <div id="ownerDayDetail" style="display:none;margin-top:20px">
+            <div id="ownerDayDetail" style="display:none;margin-bottom:20px">
               <div class="card-header">
                 <span class="card-title" id="ownerDayTitle">Día</span>
                 <button class="btn-primary btn-sm" onclick="openOwnerSlotModal()">+ Modificar aforo</button>
               </div>
               <div class="slots-container" id="ownerSlotsContainer"></div>
             </div>
+            <div class="cal-header">
+              <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(-1)">‹</button>
+              <h3 id="ownerCalTitle">—</h3>
+              <button class="btn-secondary btn-sm" onclick="ownerChangeMonth(1)">›</button>
+            </div>
+            <div class="cal-grid" id="ownerCalGrid" style="max-width:340px;margin:0 auto"></div>
+            <p id="ownerCalHint" style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:14px">Selecciona un día para ver o modificar su disponibilidad</p>
           </div>
           <div id="ownerInvEmpty" class="empty-state">
             <p>Selecciona un servicio para gestionar su disponibilidad</p>
@@ -538,7 +564,7 @@
               <label>Hasta</label>
               <input id="ownerBkTo" type="date" onchange="ownerLoadReservas()" style="border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
             </div>
-            <button class="btn-secondary" onclick="ownerLoadReservas()">${ICONS.search} Buscar</button>
+            <button class="btn-secondary" onclick="ownerLoadReservas()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Buscar</button>
           </div>
           <div class="table-wrap">
             <table>
@@ -1033,34 +1059,53 @@ async function loadOwnerServices() {
 // ══════════════════════════════════════
 async function loadOwnerWidgets() {
   const container = document.getElementById('ownerWidgetsList');
-  container.innerHTML = '<p style="color:var(--text-muted);font-size:13px">Cargando…</p>';
+  container.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 0">Cargando…</p>';
   try {
-    const svcs = await sbFetch(`/services?establishment_id=eq.${session.establishmentId}&select=id,nombre,slug,duracion,precio,color_accent,activo,descripcion&order=nombre.asc`);
+    const svcs = await sbFetch(`/services?establishment_id=eq.${session.establishmentId}&select=id,nombre,slug,duracion,precio,aforo_max,intervalo_min,color_accent,activo,descripcion&order=nombre.asc`);
     if (!svcs.length) {
-      container.innerHTML = '<div class="empty-state"><p>No hay servicios creados para este establecimiento.<br>El administrador debe crearlos desde el panel de administración.</p></div>';
+      container.innerHTML = `<div class="empty-state"><div class="icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg></div><p>No hay servicios creados todavía.<br>El administrador debe crearlos desde el panel de administración.</p></div>`;
       return;
     }
-    const widgetUrl = `${window.location.origin}${window.location.pathname.replace('owner.html', 'widget-reservas.js')}`;
     const previewUrl = `${window.location.origin}${window.location.pathname.replace('owner.html', 'preview.html')}`;
+
+    const iconClock = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+    const iconEuro  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M4 14h12M15.5 4a8 8 0 1 1 0 16"/></svg>`;
+    const iconUsers = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+    const iconRepeat= `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
+    const iconEye   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+
     container.innerHTML = svcs.map(s => {
-      const code = `&lt;div id="hotel-reservas"&gt;&lt;/div&gt;\n&lt;script src="${widgetUrl}?service_slug=${s.slug}"&gt;&lt;/script&gt;`;
-      const meta = [
-        s.duracion ? s.duracion + ' min' : null,
-        s.precio != null ? Number(s.precio).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }) + '/persona' : null,
-        `slug: ${s.slug}`
-      ].filter(Boolean).join(' · ');
+      const color = s.color_accent || '#0e4159';
+      const pills = [
+        s.duracion    ? `<span class="svc-pill">${iconClock} ${s.duracion} min</span>` : '',
+        s.precio != null ? `<span class="svc-pill">${iconEuro} ${Number(s.precio).toLocaleString('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:0})}/pers</span>` : '',
+        s.aforo_max   ? `<span class="svc-pill">${iconUsers} ${s.aforo_max} plazas/slot</span>` : '',
+        s.intervalo_min ? `<span class="svc-pill">${iconRepeat} Cada ${s.intervalo_min} min</span>` : '',
+      ].filter(Boolean).join('');
+
       return `
-      <div class="widget-card">
-        <div class="widget-card-dot" style="background:${s.color_accent || '#0e4159'}"></div>
-        <div class="widget-card-body">
-          <div class="widget-card-name">${s.nombre} <span class="${s.activo ? 'badge-active' : 'badge-inactive'}">${s.activo ? 'Activo' : 'Inactivo'}</span></div>
-          ${s.descripcion ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${s.descripcion}</div>` : ''}
-          <div class="widget-card-meta">${meta}</div>
-          <div class="widget-card-code" id="wcode-${s.id}">${code}</div>
-          <div class="widget-card-actions">
-            <button class="btn-secondary btn-sm" onclick="ownerCopyEmbed('${s.id}','${s.slug}')">📋 Copiar código</button>
-            <button class="btn-secondary btn-sm" onclick="window.open('${previewUrl}?service_slug=${s.slug}','_blank')">👁 Vista previa</button>
+      <div class="svc-card ${s.activo ? '' : 'inactive'}" id="svccard-${s.id}">
+        <div class="svc-card-header">
+          <div class="svc-card-stripe" style="background:${color}"></div>
+          <div class="svc-card-info">
+            <div class="svc-card-name">${s.nombre}</div>
+            ${s.descripcion ? `<div class="svc-card-desc">${s.descripcion}</div>` : ''}
           </div>
+          <label class="toggle-switch" title="${s.activo ? 'Activo — haz clic para pausar' : 'Pausado — haz clic para activar'}">
+            <input type="checkbox" ${s.activo ? 'checked' : ''} onchange="ownerToggleActive('${s.id}', this)">
+            <div class="toggle-track"><div class="toggle-knob"></div></div>
+            <span class="toggle-label" id="togglelabel-${s.id}">${s.activo ? 'Activo' : 'Pausado'}</span>
+          </label>
+        </div>
+        ${pills ? `<div class="svc-pills">${pills}</div>` : ''}
+        <div class="svc-card-footer">
+          <button class="btn-secondary btn-sm" onclick="ownerTogglePreview('${s.id}','${s.slug}',this)">
+            ${iconEye} Vista previa
+          </button>
+          <span class="svc-slug">${s.slug}</span>
+        </div>
+        <div id="ownerPreview-${s.id}" style="display:none;border-top:1px solid var(--border)">
+          <iframe src="${previewUrl}?service_slug=${s.slug}" style="width:100%;height:520px;border:none;display:block" loading="lazy"></iframe>
         </div>
       </div>`;
     }).join('');
@@ -1069,11 +1114,35 @@ async function loadOwnerWidgets() {
   }
 }
 
-function ownerCopyEmbed(svcId, slug) {
-  const el = document.getElementById('wcode-' + svcId);
-  const widgetUrl = `${window.location.origin}${window.location.pathname.replace('owner.html', 'widget-reservas.js')}`;
-  const plain = `<div id="hotel-reservas"></div>\n<script src="${widgetUrl}?service_slug=${slug}"><\/script>`;
-  navigator.clipboard.writeText(plain).then(() => showToast('Código copiado ✓'));
+function ownerTogglePreview(svcId, slug, btn) {
+  const panel = document.getElementById('ownerPreview-' + svcId);
+  const open  = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  btn.style.background  = open ? '' : 'var(--accent)';
+  btn.style.color       = open ? '' : '#fff';
+  btn.style.borderColor = open ? '' : 'var(--accent)';
+}
+
+async function ownerToggleActive(svcId, checkbox) {
+  const newActive = checkbox.checked;
+  const card      = document.getElementById('svccard-' + svcId);
+  const label     = document.getElementById('togglelabel-' + svcId);
+  // Optimistic UI
+  if (card)  card.classList.toggle('inactive', !newActive);
+  if (label) label.textContent = newActive ? 'Activo' : 'Pausado';
+  try {
+    await sbFetch(`/services?id=eq.${svcId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ activo: newActive })
+    });
+    showToast(newActive ? 'Servicio activado ✓' : 'Servicio pausado');
+  } catch (e) {
+    // Revertir en caso de error
+    checkbox.checked = !newActive;
+    if (card)  card.classList.toggle('inactive', newActive);
+    if (label) label.textContent = newActive ? 'Pausado' : 'Activo';
+    showToast('Error: ' + e.message, 'error');
+  }
 }
 
 // ══════════════════════════════════════
@@ -1148,10 +1217,19 @@ function renderOwnerCalendar() {
   grid.innerHTML = html;
 }
 
+function formatFechaLarga(dateStr) {
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return `${d} de ${meses[m - 1]} de ${y}`;
+}
+
 function ownerSelectDay(dateStr) {
   ownerSelectedDate = dateStr;
-  document.getElementById('ownerDayDetail').style.display = 'block';
-  document.getElementById('ownerDayTitle').textContent = 'Overrides: ' + dateStr;
+  const detail = document.getElementById('ownerDayDetail');
+  detail.style.display = 'block';
+  document.getElementById('ownerDayTitle').textContent = formatFechaLarga(dateStr);
+  document.getElementById('ownerCalHint').style.display = 'none';
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   renderOwnerDaySlots(dateStr);
 }
 

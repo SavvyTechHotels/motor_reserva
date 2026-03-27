@@ -22,6 +22,7 @@
     color_accent:  '#0e4159',
     color_secondary: '#f6f3f1',
     logo_url: '',
+    splitOccupancy: false,  // true → selectores separados Adultos / Niños
   };
 
   /* ─── Fuente Inter vía Google Fonts ──────────────────────────────── */
@@ -374,6 +375,24 @@
       text-transform: uppercase;
     }
 
+    /* ── Ocupación desglosada ── */
+    .hr-field-row {
+      display: flex;
+      gap: 16px;
+    }
+    .hr-field-row .hr-field {
+      flex: 1;
+      min-width: 0;
+    }
+    .hr-label-sub {
+      font-size: .6rem;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      opacity: .7;
+      margin-left: 4px;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 500px) {
       .hr-widget {
@@ -384,6 +403,7 @@
       .hr-header { padding: 24px 24px 18px; }
       .hr-body { padding: 24px 24px 28px; }
       .hr-slots-grid { grid-template-columns: repeat(4, 1fr); }
+      .hr-field-row { flex-direction: column; gap: 0; }
     }
   `;
 
@@ -402,6 +422,8 @@
       email: '',
       telefono: '',
       personas: 1,
+      adultos: 1,
+      ninos: 0,
     };
   }
   let state = freshState();
@@ -562,6 +584,38 @@
     `;
   }
 
+  function buildOcupacionFields(maxPersonas) {
+    if (!config.splitOccupancy) {
+      return `
+        <div class="hr-field">
+          <label class="hr-label">Número de personas</label>
+          <select class="hr-input" id="hr-personas">
+            ${Array.from({ length: maxPersonas }, (_, i) => i + 1)
+              .map(n => `<option value="${n}" ${state.personas == n ? 'selected' : ''}>${n} persona${n > 1 ? 's' : ''}</option>`)
+              .join('')}
+          </select>
+        </div>`;
+    }
+    const opts = (max, selected) => Array.from({ length: max + 1 }, (_, i) => i)
+      .map(n => `<option value="${n}" ${selected == n ? 'selected' : ''}>${n}</option>`)
+      .join('');
+    return `
+      <div class="hr-field-row">
+        <div class="hr-field">
+          <label class="hr-label">Adultos</label>
+          <select class="hr-input" id="hr-adultos">
+            ${opts(maxPersonas, state.adultos)}
+          </select>
+        </div>
+        <div class="hr-field">
+          <label class="hr-label">Niños<span class="hr-label-sub">(0–12 años)</span></label>
+          <select class="hr-input" id="hr-ninos">
+            ${opts(maxPersonas, state.ninos)}
+          </select>
+        </div>
+      </div>`;
+  }
+
   function buildStep3() {
     const maxPersonas = state.plazas_libres || 10;
     return `
@@ -578,14 +632,7 @@
         <label class="hr-label">Teléfono</label>
         <input class="hr-input" type="tel" id="hr-telefono" placeholder="+34 600 000 000" value="${state.telefono || ''}">
       </div>
-      <div class="hr-field">
-        <label class="hr-label">Número de personas</label>
-        <select class="hr-input" id="hr-personas">
-          ${Array.from({ length: maxPersonas }, (_, i) => i + 1)
-            .map(n => `<option value="${n}" ${state.personas == n ? 'selected' : ''}>${n} persona${n > 1 ? 's' : ''}</option>`)
-            .join('')}
-        </select>
-      </div>
+      ${buildOcupacionFields(maxPersonas)}
       <button class="hr-btn" id="hr-btn-step3" ${state.loading ? 'disabled' : ''}>
         ${state.loading
           ? `<span class="hr-spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></span>Confirmando…`
@@ -605,7 +652,11 @@
           <div class="hr-resumen-row"><span>Servicio</span><span>${config.nombre}</span></div>
           <div class="hr-resumen-row"><span>Fecha</span><span>${formatFecha(state.fecha)}</span></div>
           <div class="hr-resumen-row"><span>Hora</span><span>${formatHora(state.hora)}</span></div>
-          <div class="hr-resumen-row"><span>Personas</span><span>${state.personas}</span></div>
+          ${config.splitOccupancy
+            ? `<div class="hr-resumen-row"><span>Adultos</span><span>${state.adultos}</span></div>
+               <div class="hr-resumen-row"><span>Niños (0–12)</span><span>${state.ninos}</span></div>
+               <div class="hr-resumen-row"><span>Total personas</span><span>${state.personas}</span></div>`
+            : `<div class="hr-resumen-row"><span>Personas</span><span>${state.personas}</span></div>`}
           <div class="hr-resumen-row"><span>Nombre</span><span>${state.nombre}</span></div>
           ${state.telefono ? `<div class="hr-resumen-row"><span>Teléfono</span><span>${state.telefono}</span></div>` : ''}
         </div>
@@ -686,7 +737,6 @@
     const nombre    = container.querySelector('#hr-nombre').value.trim();
     const email     = container.querySelector('#hr-email').value.trim();
     const telefono  = container.querySelector('#hr-telefono').value.trim();
-    const personas  = parseInt(container.querySelector('#hr-personas').value, 10);
 
     if (!nombre) { state.error = 'El nombre es obligatorio'; render(); return; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -694,16 +744,35 @@
     }
     if (!telefono) { state.error = 'El teléfono es obligatorio'; render(); return; }
 
+    let personas, adultos, ninos;
+    if (config.splitOccupancy) {
+      adultos  = parseInt(container.querySelector('#hr-adultos').value, 10);
+      ninos    = parseInt(container.querySelector('#hr-ninos').value, 10);
+      personas = adultos + ninos;
+      if (adultos < 1) {
+        state.error = 'Debe haber al menos 1 adulto'; render(); return;
+      }
+      const maxPlazas = state.plazas_libres || 10;
+      if (personas > maxPlazas) {
+        state.error = `Aforo disponible: máximo ${maxPlazas} persona${maxPlazas !== 1 ? 's' : ''}`; render(); return;
+      }
+    } else {
+      personas = parseInt(container.querySelector('#hr-personas').value, 10);
+    }
+
     state.nombre    = nombre;
     state.email     = email;
     state.telefono  = telefono;
     state.personas  = personas;
+    if (config.splitOccupancy) { state.adultos = adultos; state.ninos = ninos; }
     state.loading   = true;
     state.error     = null;
     render();
 
     try {
-      await postReserva({ nombre, email, telefono, fecha: state.fecha, hora: state.hora, personas });
+      const payload = { nombre, email, telefono, fecha: state.fecha, hora: state.hora, personas };
+      if (config.splitOccupancy) { payload.adultos = adultos; payload.ninos = ninos; }
+      await postReserva(payload);
       state.step = 4;
     } catch (e) {
       state.error = e.message;
@@ -769,6 +838,7 @@
       config.color_secondary     = cfg.color_secondary || (cfg.config && cfg.config.color_secondary)  || '#f6f3f1';
       config.logo_url            = (cfg.config && cfg.config.logo_url) || '';
       config.foto_url            = cfg.foto_url || '';
+      config.splitOccupancy      = cfg.split_occupancy === true || (cfg.config && cfg.config.split_occupancy === true) || false;
     } catch (e) {
       container.innerHTML = `<div class="hr-init-error">No se pudo cargar el widget.<br><small>${e.message}</small></div>`;
       return;
