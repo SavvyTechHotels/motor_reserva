@@ -666,6 +666,10 @@
           <input id="ownerManBkEmail" type="email" placeholder="email@ejemplo.com">
         </div>
         <div class="form-group">
+          <label>Teléfono</label>
+          <input id="ownerManBkTelefono" type="tel" placeholder="+34 600 000 000">
+        </div>
+        <div class="form-group">
           <label>Personas *</label>
           <input id="ownerManBkPersonas" type="number" min="1" value="1">
         </div>
@@ -1441,6 +1445,7 @@ async function fetchOwnerManualSlots() {
 async function saveOwnerManualBk() {
   const nombre   = document.getElementById('ownerManBkNombre').value.trim();
   const email    = document.getElementById('ownerManBkEmail').value.trim();
+  const telefono = document.getElementById('ownerManBkTelefono').value.trim();
   const fecha    = document.getElementById('ownerManBkFecha').value;
   const hora     = document.getElementById('ownerManBkHora').value;
   const personas = parseInt(document.getElementById('ownerManBkPersonas').value) || 1;
@@ -1456,10 +1461,18 @@ async function saveOwnerManualBk() {
   const btn = document.getElementById('ownerManBkSaveBtn');
   btn.disabled = true; btn.textContent = 'Guardando…';
   try {
-    await sbFetch('/bookings', {
+    const created = await sbFetch('/bookings', {
       method: 'POST',
-      body: JSON.stringify({ establishment_id: session.establishmentId, service_id: serviceId, nombre, email, fecha, hora: hora.length === 5 ? hora + ':00' : hora, personas, estado })
+      body: JSON.stringify({ establishment_id: session.establishmentId, service_id: serviceId, nombre, email, ...(telefono && { telefono }), fecha, hora: hora.length === 5 ? hora + ':00' : hora, personas, estado })
     });
+    const bookingId = Array.isArray(created) ? created[0]?.id : created?.id;
+    if (bookingId) {
+      fetch('https://vmi3024621.contaboserver.net/webhook/notificar-reserva-manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId })
+      }).catch(() => {});
+    }
     closeModal('ownerManualBkModal');
     showToast('Reserva creada ✓');
     ownerLoadReservas();

@@ -1033,6 +1033,10 @@
           <input id="manBkEmail" type="email" placeholder="email@ejemplo.com">
         </div>
         <div class="form-group">
+          <label>Teléfono</label>
+          <input id="manBkTelefono" type="tel" placeholder="+34 600 000 000">
+        </div>
+        <div class="form-group">
           <label>Personas *</label>
           <input id="manBkPersonas" type="number" min="1" value="1">
         </div>
@@ -2501,6 +2505,7 @@ async function fetchManualSlots() {
 async function saveManualBk() {
   const nombre   = document.getElementById('manBkNombre').value.trim();
   const email    = document.getElementById('manBkEmail').value.trim();
+  const telefono = document.getElementById('manBkTelefono').value.trim();
   const fecha    = document.getElementById('manBkFecha').value;
   const hora     = document.getElementById('manBkHora').value;
   const personas = parseInt(document.getElementById('manBkPersonas').value) || 1;
@@ -2516,10 +2521,18 @@ async function saveManualBk() {
   const btn = document.getElementById('manBkSaveBtn');
   btn.disabled = true; btn.textContent = 'Guardando…';
   try {
-    await sbFetch('/bookings', {
+    const created = await sbFetch('/bookings', {
       method: 'POST',
-      body: JSON.stringify({ establishment_id, service_id, nombre, email, fecha, hora: hora.length === 5 ? hora + ':00' : hora, personas, estado })
+      body: JSON.stringify({ establishment_id, service_id, nombre, email, ...(telefono && { telefono }), fecha, hora: hora.length === 5 ? hora + ':00' : hora, personas, estado })
     });
+    const bookingId = Array.isArray(created) ? created[0]?.id : created?.id;
+    if (bookingId) {
+      fetch('https://vmi3024621.contaboserver.net/webhook/notificar-reserva-manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId })
+      }).catch(() => {});
+    }
     closeModal('manualBkModal');
     showToast('Reserva creada ✓');
     loadReservas();
