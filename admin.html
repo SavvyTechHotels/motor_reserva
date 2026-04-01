@@ -105,7 +105,7 @@
     .settings-bar button { font-size: 12px; }
 
     /* ── Main ── */
-    main { flex: 1; padding: 28px; max-width: 1100px; }
+    main { flex: 1; padding: 28px; max-width: 1400px; }
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
@@ -167,10 +167,26 @@
       font-size: 11px;
       font-weight: 600;
     }
-    .badge-green { background: #d4f5e1; color: #1a7a40; }
-    .badge-gray  { background: #ececec; color: #666; }
-    .badge-blue  { background: #dbeafe; color: #1d4ed8; }
-    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-green       { background: #d4f5e1; color: #1a7a40; }
+    .badge-gray        { background: #ececec; color: #666; }
+    .badge-blue        { background: #dbeafe; color: #1d4ed8; }
+    .badge-amber       { background: #fef3c7; color: #92400e; }
+    .badge-yellow      { background: #fef9c3; color: #854d0e; }
+    .badge-savvy       { background: #cfe8f3; color: #0e4159; }
+
+    /* ── Filas de reservas por estado ── */
+    .row-confirmada td   { background: #fefce8 !important; }
+    .row-confirmada:hover td { background: #fef08a55 !important; }
+    .row-reconfirmada td { background: #ecfdf5 !important; }
+    .row-reconfirmada:hover td { background: #d1fae5 !important; }
+    .row-urgente td      { background: #fef2f2 !important; }
+    .row-urgente:hover td { background: #fee2e2 !important; }
+    .btn-reconfirmar {
+      background: #0e4159; color: #fff; border: none; border-radius: 6px;
+      padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-reconfirmar:hover { background: #1a5c7a; }
 
     /* ── Forms ── */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -762,20 +778,20 @@
           <table>
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
+                <th style="white-space:nowrap">Fecha</th>
+                <th style="white-space:nowrap">Hora</th>
                 <th>Nombre</th>
                 <th>Email</th>
                 <th>Teléfono</th>
                 <th>Pers.</th>
                 <th>Establecimiento</th>
                 <th>Servicio</th>
-                <th>Estado</th>
-                <th></th>
+                <th style="white-space:nowrap">Estado</th>
+                <th style="white-space:nowrap;width:1px"></th>
               </tr>
             </thead>
             <tbody id="bkTbody">
-              <tr><td colspan="9"><div class="empty-state"><p>Selecciona filtros y busca</p></div></td></tr>
+              <tr><td colspan="10"><div class="empty-state"><p>Selecciona filtros y busca</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -2388,18 +2404,45 @@ async function loadReservas() {
   }
 }
 
+function getAlertaReserva(b) {
+  if (b.estado === 'cancelada') return 'cancelada';
+  if (b.estado === 'reconfirmada') return 'reconfirmada';
+  if (b.estado === 'confirmada' && b.fecha && b.hora) {
+    const now = new Date();
+    const bookingDt = new Date(b.fecha + 'T' + b.hora);
+    const diffHours = (bookingDt - now) / 3600000;
+    if (diffHours >= 0 && diffHours < 3) return 'urgente';
+  }
+  return 'confirmada';
+}
+
 function renderReservasTable() {
   const tbody = document.getElementById('bkTbody');
   if (!bkData.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">${ICONS.calendarLg}</div><p>No hay reservas en este período</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="icon">${ICONS.calendarLg}</div><p>No hay reservas en este período</p></div></td></tr>`;
     return;
   }
-  const estadoColors = { confirmada:'badge-green', pendiente:'badge-amber', cancelada:'badge-gray' };
-  tbody.innerHTML = bkData.map(b => `
-    <tr>
-      <td>${b.fecha}</td>
-      <td>${b.hora ? b.hora.slice(0,5) : '—'}</td>
-      <td>${b.nombre}</td>
+  const estadoColors = { confirmada: 'badge-yellow', reconfirmada: 'badge-savvy', cancelada: 'badge-gray' };
+  tbody.innerHTML = bkData.map(b => {
+    const alerta = getAlertaReserva(b);
+    const rowClass = alerta === 'urgente' ? 'row-urgente'
+                   : alerta === 'reconfirmada' ? 'row-reconfirmada'
+                   : alerta === 'confirmada' ? 'row-confirmada' : '';
+    const urgenteWarning = alerta === 'urgente'
+      ? `<div style="font-size:11px;color:#c0392b;font-weight:700;margin-top:3px">⚠️ URGENTE: LLAMAR PARA RECONFIRMAR</div>`
+      : '';
+    const btnReconfirmar = (alerta === 'confirmada' || alerta === 'urgente')
+      ? `<button class="btn-reconfirmar" onclick="reconfirmarReserva('${b.id}',this)">Reconfirmar ✓</button>`
+      : '';
+    return `
+    <tr class="${rowClass}">
+      <td style="white-space:nowrap">${b.fecha}</td>
+      <td style="white-space:nowrap">${b.hora ? b.hora.slice(0,5) : '—'}</td>
+      <td>
+        ${b.nombre}
+        ${b.comentario ? `<button onclick="event.stopPropagation();showComentario(this.dataset.c)" data-c="${b.comentario.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" style="margin-left:6px;background:#e8f4fb;border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;color:#0e4159;vertical-align:middle">💬</button>` : ''}
+        ${urgenteWarning}
+      </td>
       <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
       <td>${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
       <td style="text-align:center">
@@ -2413,15 +2456,44 @@ function renderReservasTable() {
       <td>${b.establishments ? b.establishments.nombre : (b.establishment_id ? b.establishment_id.slice(0,8)+'…' : '—')}</td>
       <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${estadoColors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
-      <td>
-        <select onchange="updateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px;font-size:11px">
-          <option value="">Cambiar…</option>
-          <option value="confirmada">Confirmar</option>
-          <option value="cancelada">Cancelar</option>
-        </select>
+      <td style="white-space:nowrap">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
+          ${btnReconfirmar}
+          <select onchange="updateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px 6px;font-size:11px;white-space:nowrap">
+            <option value="">Cambiar…</option>
+            <option value="confirmada">Confirmar</option>
+            <option value="reconfirmada">Reconfirmar</option>
+            <option value="cancelada">Cancelar</option>
+          </select>
+        </div>
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
+}
+
+async function reconfirmarReserva(id, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch('https://vmi3024621.contaboserver.net/webhook/reconfirmar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: id })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const bk = bkData.find(b => b.id === id);
+      if (bk) bk.estado = 'reconfirmada';
+      renderReservasTable();
+      showToast('Reserva reconfirmada ✓');
+    } else {
+      throw new Error(data.error || 'Error al reconfirmar');
+    }
+  } catch (e) {
+    showToast(e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Reconfirmar ✓';
+  }
 }
 
 async function updateEstado(id, estado) {
@@ -2547,6 +2619,21 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 let _toastTimer;
+function showComentario(texto) {
+  const existing = document.getElementById('comentarioPopup');
+  if (existing) existing.remove();
+  const popup = document.createElement('div');
+  popup.id = 'comentarioPopup';
+  popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:9999';
+  popup.innerHTML = `<div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#7a8fa0;margin-bottom:10px">Comentario del cliente</p>
+    <p style="font-size:15px;color:#1a2e3b;line-height:1.6;margin-bottom:20px">${texto}</p>
+    <button onclick="document.getElementById('comentarioPopup').remove()" style="background:#0e4159;color:#fff;border:none;border-radius:8px;padding:9px 24px;font-size:14px;font-weight:600;cursor:pointer">Cerrar</button>
+  </div>`;
+  popup.addEventListener('click', e => { if (e.target === popup) popup.remove(); });
+  document.body.appendChild(popup);
+}
+
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;

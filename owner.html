@@ -100,7 +100,7 @@
     nav.sidebar button:hover { background: var(--bg); color: var(--text); }
     nav.sidebar button.active { background: #f5ede4; color: var(--accent); font-weight: 600; border-left: 3px solid var(--accent); }
 
-    main { flex: 1; padding: 24px; max-width: 1000px; }
+    main { flex: 1; padding: 24px; max-width: 1200px; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
@@ -569,10 +569,10 @@
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Fecha</th><th>Hora</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Pers.</th><th>Servicio</th><th>Estado</th><th></th></tr>
+                <tr><th style="white-space:nowrap">Fecha</th><th style="white-space:nowrap">Hora</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Pers.</th><th>Servicio</th><th style="white-space:nowrap">Estado</th><th style="white-space:nowrap;width:1px"></th></tr>
               </thead>
               <tbody id="ownerBkTbody">
-                <tr><td colspan="8"><div class="empty-state"><p>Selecciona un rango de fechas</p></div></td></tr>
+                <tr><td colspan="9"><div class="empty-state"><p>Selecciona un rango de fechas</p></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -1361,22 +1361,25 @@ async function ownerLoadReservas() {
 function renderOwnerBkTable() {
   const tbody = document.getElementById('ownerBkTbody');
   if (!ownerBkData.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">${ICONS.calendarLg}</div><p>No hay reservas en este período</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">${ICONS.calendarLg}</div><p>No hay reservas en este período</p></div></td></tr>`;
     return;
   }
   const colors = { confirmada:'badge-green', pendiente:'badge-amber', cancelada:'badge-gray' };
   tbody.innerHTML = ownerBkData.map(b => `
     <tr>
-      <td>${b.fecha}</td>
-      <td>${b.hora ? b.hora.slice(0,5) : '—'}</td>
-      <td>${b.nombre}</td>
+      <td style="white-space:nowrap">${b.fecha}</td>
+      <td style="white-space:nowrap">${b.hora ? b.hora.slice(0,5) : '—'}</td>
+      <td>
+        ${b.nombre}
+        ${b.comentario ? `<button onclick="event.stopPropagation();showComentario(this.dataset.c)" data-c="${b.comentario.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" style="margin-left:6px;background:#e8f4fb;border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;color:#0e4159;vertical-align:middle">💬</button>` : ''}
+      </td>
       <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
       <td>${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
       <td style="text-align:center">${b.personas}</td>
       <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${colors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
-      <td>
-        <select onchange="ownerUpdateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px;font-size:11px">
+      <td style="white-space:nowrap">
+        <select onchange="ownerUpdateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px 6px;font-size:11px;white-space:nowrap">
           <option value="">Cambiar…</option>
           <option value="confirmada">Confirmar</option>
           <option value="cancelada">Cancelar</option>
@@ -1532,6 +1535,21 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', e => { if (e.target===bd) bd.classList.remove('open'); }));
 
 let _toastTimer;
+function showComentario(texto) {
+  const existing = document.getElementById('comentarioPopup');
+  if (existing) existing.remove();
+  const popup = document.createElement('div');
+  popup.id = 'comentarioPopup';
+  popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:9999';
+  popup.innerHTML = `<div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#7a8fa0;margin-bottom:10px">Comentario del cliente</p>
+    <p style="font-size:15px;color:#1a2e3b;line-height:1.6;margin-bottom:20px">${texto}</p>
+    <button onclick="document.getElementById('comentarioPopup').remove()" style="background:#0e4159;color:#fff;border:none;border-radius:8px;padding:9px 24px;font-size:14px;font-weight:600;cursor:pointer">Cerrar</button>
+  </div>`;
+  popup.addEventListener('click', e => { if (e.target === popup) popup.remove(); });
+  document.body.appendChild(popup);
+}
+
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;

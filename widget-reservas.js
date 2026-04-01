@@ -421,6 +421,7 @@
       nombre: '',
       email: '',
       telefono: '',
+      comentario: '',
       personas: 1,
       adultos: 1,
       ninos: 0,
@@ -632,6 +633,10 @@
         <label class="hr-label">Teléfono</label>
         <input class="hr-input" type="tel" id="hr-telefono" placeholder="+34 600 000 000" value="${state.telefono || ''}">
       </div>
+      <div class="hr-field">
+        <label class="hr-label">Comentario <span style="font-weight:400;color:var(--hr-muted)">(opcional)</span></label>
+        <textarea class="hr-input" id="hr-comentario" placeholder="Alergias, peticiones especiales…" rows="3" style="resize:vertical;min-height:72px">${state.comentario || ''}</textarea>
+      </div>
       ${buildOcupacionFields(maxPersonas)}
       <button class="hr-btn" id="hr-btn-step3" ${state.loading ? 'disabled' : ''}>
         ${state.loading
@@ -659,6 +664,7 @@
             : `<div class="hr-resumen-row"><span>Personas</span><span>${state.personas}</span></div>`}
           <div class="hr-resumen-row"><span>Nombre</span><span>${state.nombre}</span></div>
           ${state.telefono ? `<div class="hr-resumen-row"><span>Teléfono</span><span>${state.telefono}</span></div>` : ''}
+          ${state.comentario ? `<div class="hr-resumen-row"><span>Comentario</span><span>${state.comentario}</span></div>` : ''}
         </div>
         <button class="hr-nueva-reserva" id="hr-nueva-reserva">Hacer otra reserva</button>
       </div>
@@ -734,9 +740,10 @@
   }
 
   async function submitReserva() {
-    const nombre    = container.querySelector('#hr-nombre').value.trim();
-    const email     = container.querySelector('#hr-email').value.trim();
-    const telefono  = container.querySelector('#hr-telefono').value.trim();
+    const nombre      = container.querySelector('#hr-nombre').value.trim();
+    const email       = container.querySelector('#hr-email').value.trim();
+    const telefono    = container.querySelector('#hr-telefono').value.trim();
+    const comentario  = (container.querySelector('#hr-comentario')?.value || '').trim();
 
     if (!nombre) { state.error = 'El nombre es obligatorio'; render(); return; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -760,17 +767,18 @@
       personas = parseInt(container.querySelector('#hr-personas').value, 10);
     }
 
-    state.nombre    = nombre;
-    state.email     = email;
-    state.telefono  = telefono;
-    state.personas  = personas;
+    state.nombre      = nombre;
+    state.email       = email;
+    state.telefono    = telefono;
+    state.comentario  = comentario;
+    state.personas    = personas;
     if (config.splitOccupancy) { state.adultos = adultos; state.ninos = ninos; }
     state.loading   = true;
     state.error     = null;
     render();
 
     try {
-      const payload = { nombre, email, telefono, fecha: state.fecha, hora: state.hora, personas };
+      const payload = { nombre, email, telefono, comentario, fecha: state.fecha, hora: state.hora, personas };
       if (config.splitOccupancy) { payload.adultos = adultos; payload.ninos = ninos; }
       await postReserva(payload);
       state.step = 4;
