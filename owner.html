@@ -1125,6 +1125,10 @@ function ownerTogglePreview(svcId, slug, btn) {
   btn.style.background  = open ? '' : 'var(--accent)';
   btn.style.color       = open ? '' : '#fff';
   btn.style.borderColor = open ? '' : 'var(--accent)';
+  if (!open) {
+    const iframe = panel.querySelector('iframe');
+    if (iframe) { const s = iframe.src; iframe.src = ''; iframe.src = s; }
+  }
 }
 
 async function ownerToggleActive(svcId, checkbox) {

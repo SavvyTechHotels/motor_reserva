@@ -504,8 +504,9 @@
       4: { title: '¡Reserva confirmada!', sub: `${config.establishment_nombre || config.nombre} — Te esperamos` },
     }[state.step];
 
-    const logoHtml = config.logo_url
-      ? `<div class="hr-logo-wrap"><img class="hr-logo hr-logo-img" src="${config.logo_url}" alt=""></div>`
+    const logoSrc = config.foto_url || config.logo_url || '';
+    const logoHtml = logoSrc
+      ? `<div class="hr-logo-wrap"><img class="hr-logo hr-logo-img" src="${logoSrc}" alt=""></div>`
       : `<div class="hr-logo-wrap"><span class="hr-logo-placeholder">${config.nombre || ''}</span></div>`;
 
     return `
