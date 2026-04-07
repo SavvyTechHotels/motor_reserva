@@ -289,6 +289,12 @@
     }
     .close-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); padding: 4px; }
 
+    /* ── Booking detail selections ── */
+    .bk-sel-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .bk-sel-row { background: #fff; border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; padding: 10px 14px; gap: 12px; }
+    .bk-sel-label { color: var(--primary); font-weight: 600; font-size: 12px; min-width: 80px; }
+    .bk-sel-select, .bk-sel-input { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; font-family: inherit; }
+
     /* ── Embed code modal ── */
     .embed-box {
       background: #1a1a2e;
@@ -1146,6 +1152,16 @@
           </label>
           <p style="font-size:11px;color:var(--text-muted);margin-top:4px;padding-left:26px">Si está activo, el widget mostrará dos selectores en lugar del selector único de "Personas".</p>
         </div>
+        <div class="form-group form-full">
+          <label>Opciones de menú / variante</label>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Si hay opciones, el widget pedirá al cliente que elija una por persona antes de confirmar.</p>
+          <div id="svcOptsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="svcOptName" type="text" placeholder="Ej: Menú Degustación" style="flex:1;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+            <input id="svcOptPrice" type="number" min="0" step="0.01" placeholder="Precio (€)" style="width:110px;border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:13px">
+            <button type="button" class="btn-secondary btn-sm" onclick="addSvcOption()">+ Añadir</button>
+          </div>
+        </div>
       </div>
       <div class="divider"></div>
       <p class="section-title">Horario del servicio</p>
@@ -1180,6 +1196,23 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('svcModal')">Cancelar</button>
       <button class="btn-primary" onclick="saveService()">Guardar servicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Detalle de reserva (Admin)
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="bkDetailModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2 id="bkDetailTitle">Detalle de reserva</h2>
+      <button class="close-btn" onclick="closeModal('bkDetailModal')">×</button>
+    </div>
+    <div class="modal-body" id="bkDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('bkDetailModal')">Cerrar</button>
+      <button class="btn-primary" onclick="saveBkDetail()">Guardar cambios</button>
     </div>
   </div>
 </div>
@@ -1646,6 +1679,36 @@ function renderSvcFechas() {
   ).join('');
 }
 
+/* ── Opciones de menú/variante ── */
+let svcOptions = []; // array local mientras el modal está abierto
+
+function renderSvcOptions() {
+  const list = document.getElementById('svcOptsList');
+  if (!list) return;
+  list.innerHTML = svcOptions.map((o, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg)">
+      <span style="flex:1;font-size:13px">${o.name}</span>
+      ${o.price != null ? `<span style="font-size:12px;color:var(--text-muted)">${Number(o.price).toLocaleString('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:0})}</span>` : ''}
+      <button type="button" onclick="removeSvcOption(${i})" style="border:none;background:none;cursor:pointer;color:#c0392b;font-size:15px;line-height:1;padding:0 4px">×</button>
+    </div>`).join('');
+}
+
+function addSvcOption() {
+  const name  = document.getElementById('svcOptName').value.trim();
+  const price = document.getElementById('svcOptPrice').value.trim();
+  if (!name) { showToast('Escribe el nombre de la opción', 'error'); return; }
+  const id = svcOptions.length > 0 ? Math.max(...svcOptions.map(o => o.id)) + 1 : 1;
+  svcOptions.push({ id, name, price: price !== '' ? parseFloat(price) : null });
+  document.getElementById('svcOptName').value  = '';
+  document.getElementById('svcOptPrice').value = '';
+  renderSvcOptions();
+}
+
+function removeSvcOption(index) {
+  svcOptions.splice(index, 1);
+  renderSvcOptions();
+}
+
 function autoSvcSlug() {
   const nombre = document.getElementById('svcNombre').value;
   const slug = nombre.toLowerCase()
@@ -1662,14 +1725,14 @@ let allServices = []; // cache global de todos los servicios
 
 async function loadAllServices() {
   try {
-    allServices = await sbFetch('/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,activo,intervalo_min,horario,tipo_horario,fechas_especificas,split_occupancy,establishment_id,establishments(nombre)&order=establishment_id.asc,nombre.asc');
+    allServices = await sbFetch('/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,activo,intervalo_min,horario,tipo_horario,fechas_especificas,split_occupancy,selectable_options,establishment_id,establishments(nombre)&order=establishment_id.asc,nombre.asc');
   } catch (e) {
     allServices = [];
   }
 }
 
 async function loadServices(estId) {
-  let path = '/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,foto_url,activo,intervalo_min,horario,tipo_horario,fechas_especificas,descripcion,split_occupancy,establishment_id,establishments(nombre)&order=nombre.asc';
+  let path = '/services?select=id,nombre,slug,duracion,aforo_max,precio,color_accent,color_secondary,foto_url,activo,intervalo_min,horario,tipo_horario,fechas_especificas,descripcion,split_occupancy,selectable_options,establishment_id,establishments(nombre)&order=nombre.asc';
   if (estId) path += `&establishment_id=eq.${estId}`;
   try {
     const data = await sbFetch(path);
@@ -1737,6 +1800,8 @@ function openServiceModal() {
   previewSvcFoto('');
   document.getElementById('svcDesc').value = '';
   document.getElementById('svcSplitOccupancy').checked = false;
+  svcOptions = [];
+  renderSvcOptions();
   // Reset tipo horario
   document.querySelector('input[name="svcTipoHorario"][value="semanal"]').checked = true;
   switchTipoHorario('semanal');
@@ -1770,6 +1835,8 @@ function editService(id) {
   previewSvcFoto(svc.foto_url || '');
   document.getElementById('svcDesc').value = svc.descripcion || '';
   document.getElementById('svcSplitOccupancy').checked = !!svc.split_occupancy;
+  svcOptions = Array.isArray(svc.selectable_options) ? JSON.parse(JSON.stringify(svc.selectable_options)) : [];
+  renderSvcOptions();
   // Tipo horario — detectado desde horario.tipo
   const h = svc.horario || {};
   const tipo = h.tipo === 'especifico' ? 'especifico' : 'semanal';
@@ -1941,6 +2008,7 @@ async function saveService() {
     color_secondary: document.getElementById('svcColorSec').value || '#f6f3f1',
     foto_url: document.getElementById('svcFotoUrl').value.trim() || null,
     split_occupancy: document.getElementById('svcSplitOccupancy').checked,
+    selectable_options: svcOptions.length > 0 ? svcOptions : null,
     ...buildSvcHorarioPayload(),
   };
 
@@ -2432,19 +2500,24 @@ function renderReservasTable() {
       ? `<div style="font-size:11px;color:#c0392b;font-weight:700;margin-top:3px">⚠️ URGENTE: LLAMAR PARA RECONFIRMAR</div>`
       : '';
     const btnReconfirmar = (alerta === 'confirmada' || alerta === 'urgente')
-      ? `<button class="btn-reconfirmar" onclick="reconfirmarReserva('${b.id}',this)">Reconfirmar ✓</button>`
+      ? `<button class="btn-reconfirmar" onclick="event.stopPropagation();reconfirmarReserva('${b.id}',this)">Reconfirmar ✓</button>`
+      : '';
+    const _rawSel = typeof b.selections_detail === 'string' ? (() => { try { return JSON.parse(b.selections_detail); } catch { return {}; } })() : (b.selections_detail || {});
+    const hasSelections = Object.keys(_rawSel).length > 0;
+    const selBadge = hasSelections
+      ? `<span title="${Object.entries(_rawSel).map(([p,o])=>'P'+p+': '+o).join(' · ').replace(/"/g,'&quot;')}" style="margin-left:6px;background:#e8f4fb;border-radius:5px;padding:2px 7px;font-size:11px;cursor:default;color:#0e4159;vertical-align:middle;display:inline-block">🍽 ${Object.keys(_rawSel).length}</span>`
       : '';
     return `
-    <tr class="${rowClass}">
+    <tr class="${rowClass}" onclick="openBkDetail('${b.id}')" style="cursor:pointer">
       <td style="white-space:nowrap">${b.fecha}</td>
       <td style="white-space:nowrap">${b.hora ? b.hora.slice(0,5) : '—'}</td>
       <td>
-        ${b.nombre}
+        ${b.nombre}${selBadge}
         ${b.comentario ? `<button onclick="event.stopPropagation();showComentario(this.dataset.c)" data-c="${b.comentario.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" style="margin-left:6px;background:#e8f4fb;border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;color:#0e4159;vertical-align:middle">💬</button>` : ''}
         ${urgenteWarning}
       </td>
-      <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
-      <td>${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
+      <td><a href="mailto:${b.email}" onclick="event.stopPropagation()" style="color:var(--accent)">${b.email}</a></td>
+      <td>${b.telefono ? `<a href="tel:${b.telefono}" onclick="event.stopPropagation()" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
       <td style="text-align:center">
         ${(b.adultos != null)
           ? `<span title="${b.personas} personas en total" style="cursor:default">
@@ -2456,7 +2529,7 @@ function renderReservasTable() {
       <td>${b.establishments ? b.establishments.nombre : (b.establishment_id ? b.establishment_id.slice(0,8)+'…' : '—')}</td>
       <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${estadoColors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
-      <td style="white-space:nowrap">
+      <td style="white-space:nowrap" onclick="event.stopPropagation()">
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
           ${btnReconfirmar}
           <select onchange="updateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px 6px;font-size:11px;white-space:nowrap">
@@ -2502,6 +2575,88 @@ async function updateEstado(id, estado) {
     await sbFetch('/bookings?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ estado }) });
     showToast('Estado actualizado ✓');
     await loadReservas();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ── Booking detail / edit modal ──
+let currentBkDetail = null;
+
+function openBkDetail(id) {
+  const b = bkData.find(x => x.id === id);
+  if (!b) return;
+  currentBkDetail = b;
+  const svc = allServices.find(s => s.id === b.service_id);
+  const opts = svc && Array.isArray(svc.selectable_options) ? svc.selectable_options : [];
+  let detail = b.selections_detail || {};
+  if (typeof detail === 'string') { try { detail = JSON.parse(detail); } catch { detail = {}; } }
+  const personas = b.personas || 1;
+  const estadoColors = { confirmada: 'badge-yellow', reconfirmada: 'badge-savvy', cancelada: 'badge-gray' };
+
+  let selContent = '';
+  if (opts.length > 0) {
+    selContent = Array.from({ length: personas }, (_, i) => {
+      const p = i + 1;
+      const curr = detail[p] || detail[String(p)] || '';
+      const optHtml = `<option value="">— Sin elegir —</option>` +
+        opts.map(o => `<option value="${o.name.replace(/"/g,'&quot;')}" ${curr === o.name ? 'selected' : ''}>${o.name}${o.price != null ? ' (+€'+o.price+')' : ''}</option>`).join('');
+      return `<div class="bk-sel-row"><span class="bk-sel-label">Persona ${p}</span><select class="bk-sel-select" data-person="${p}">${optHtml}</select></div>`;
+    }).join('');
+  } else if (Object.keys(detail).length > 0) {
+    selContent = Object.entries(detail).map(([p, opt]) =>
+      `<div class="bk-sel-row"><span class="bk-sel-label">Persona ${p}</span><input type="text" class="bk-sel-input" data-person="${p}" value="${String(opt).replace(/"/g,'&quot;')}" placeholder="—"></div>`
+    ).join('');
+  } else {
+    selContent = `<p style="color:var(--text-muted);font-size:13px;padding:6px 0">Sin opciones especiales</p>`;
+  }
+
+  const lbl = txt => `<span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">${txt}</span>`;
+  document.getElementById('bkDetailTitle').textContent = b.nombre;
+  document.getElementById('bkDetailBody').innerHTML = `
+    <div style="color:var(--text-muted);font-size:13px;margin-bottom:18px">${b.fecha} · ${b.hora ? b.hora.slice(0,5) : '—'} · ${b.personas} persona${b.personas !== 1 ? 's' : ''} · <span class="badge ${estadoColors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:18px">
+      <div>${lbl('Email')}<div style="margin-top:3px;font-size:13px"><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></div></div>
+      <div>${lbl('Teléfono')}<div style="margin-top:3px;font-size:13px">${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</div></div>
+      <div>${lbl('Servicio')}<div style="margin-top:3px;font-size:13px">${b.services ? b.services.nombre : '—'}</div></div>
+      <div>${lbl('Establecimiento')}<div style="margin-top:3px;font-size:13px">${b.establishments ? b.establishments.nombre : '—'}</div></div>
+    </div>
+    ${b.comentario ? `<div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:13px"><strong>Nota:</strong> ${b.comentario}</div>` : ''}
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--primary);margin-bottom:10px">🍽 Selección de menú / variantes</div>
+      <div class="bk-sel-grid" id="bkSelGrid">${selContent}</div>
+    </div>`;
+  openModal('bkDetailModal');
+}
+
+async function saveBkDetail() {
+  if (!currentBkDetail) return;
+  const b = currentBkDetail;
+  const svc = allServices.find(s => s.id === b.service_id);
+  const opts = svc && Array.isArray(svc.selectable_options) ? svc.selectable_options : [];
+  const grid = document.getElementById('bkSelGrid');
+  let newDetail = null;
+
+  if (opts.length > 0) {
+    const obj = {};
+    grid.querySelectorAll('.bk-sel-select').forEach(s => { if (s.value) obj[s.dataset.person] = s.value; });
+    if (Object.keys(obj).length > 0) newDetail = obj;
+  } else {
+    const obj = {};
+    grid.querySelectorAll('.bk-sel-input').forEach(inp => { if (inp.value.trim()) obj[inp.dataset.person] = inp.value.trim(); });
+    if (Object.keys(obj).length > 0) newDetail = obj;
+  }
+
+  try {
+    await sbFetch('/bookings?id=eq.' + b.id, { method: 'PATCH', body: JSON.stringify({ selections_detail: newDetail }) });
+    b.selections_detail = newDetail;
+    fetch('https://vmi3024621.contaboserver.net/webhook/actualizar-selecciones', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: b.id, service_id: b.service_id, email: b.email, fecha: b.fecha, selections_detail: newDetail })
+    }).catch(() => {});
+    showToast('Selecciones guardadas ✓');
+    closeModal('bkDetailModal');
+    renderReservasTable();
   } catch (e) {
     showToast(e.message, 'error');
   }

@@ -151,9 +151,16 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #faf8f5; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .badge-green { background: #d4f5e1; color: #1a7a40; }
-    .badge-gray  { background: #ececec; color: #666; }
-    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-green  { background: #d4f5e1; color: #1a7a40; }
+    .badge-gray   { background: #ececec; color: #666; }
+    .badge-amber  { background: #fef3c7; color: #92400e; }
+    .badge-savvy  { background: #dbeafe; color: #1e40af; }
+    .btn-reconfirmar {
+      background: #0e4159; color: #fff; border: none; border-radius: 6px;
+      padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-reconfirmar:hover { background: #1a5c7a; }
 
     /* ── Calendar ── */
     .cal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -181,6 +188,12 @@
     .modal-body { padding: 20px 24px; }
     .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
     .close-btn { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); padding: 4px; }
+
+    /* ── Booking detail selections ── */
+    .bk-sel-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .bk-sel-row { background: #fff; border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; padding: 10px 14px; gap: 12px; }
+    .bk-sel-label { color: var(--primary); font-weight: 600; font-size: 12px; min-width: 80px; }
+    .bk-sel-input { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; font-family: inherit; }
 
     /* ── Misc ── */
     .divider { height: 1px; background: var(--border); margin: 16px 0; }
@@ -685,6 +698,23 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('ownerManualBkModal')">Cancelar</button>
       <button class="btn-primary" id="ownerManBkSaveBtn" onclick="saveOwnerManualBk()">Crear reserva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Detalle de reserva (Owner)
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="ownerBkDetailModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h2 id="ownerBkDetailTitle">Detalle de reserva</h2>
+      <button class="close-btn" onclick="closeModal('ownerBkDetailModal')">×</button>
+    </div>
+    <div class="modal-body" id="ownerBkDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('ownerBkDetailModal')">Cerrar</button>
+      <button class="btn-primary" onclick="saveOwnerBkDetail()">Guardar cambios</button>
     </div>
   </div>
 </div>
@@ -1368,28 +1398,42 @@ function renderOwnerBkTable() {
     tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">${ICONS.calendarLg}</div><p>No hay reservas en este período</p></div></td></tr>`;
     return;
   }
-  const colors = { confirmada:'badge-green', pendiente:'badge-amber', cancelada:'badge-gray' };
-  tbody.innerHTML = ownerBkData.map(b => `
-    <tr>
+  const colors = { confirmada:'badge-green', reconfirmada:'badge-savvy', pendiente:'badge-amber', cancelada:'badge-gray' };
+  tbody.innerHTML = ownerBkData.map(b => {
+    const _rawSel = typeof b.selections_detail === 'string' ? (() => { try { return JSON.parse(b.selections_detail); } catch { return {}; } })() : (b.selections_detail || {});
+    const hasSelections = Object.keys(_rawSel).length > 0;
+    const selBadge = hasSelections
+      ? `<span title="${Object.entries(_rawSel).map(([p,o])=>'P'+p+': '+o).join(' · ').replace(/"/g,'&quot;')}" style="margin-left:6px;background:#e8f4fb;border-radius:5px;padding:2px 7px;font-size:11px;cursor:default;color:#0e4159;vertical-align:middle;display:inline-block">🍽 ${Object.keys(_rawSel).length}</span>`
+      : '';
+    const btnReconfirmar = (b.estado === 'confirmada')
+      ? `<button class="btn-reconfirmar" onclick="event.stopPropagation();ownerReconfirmarReserva('${b.id}',this)">Reconfirmar ✓</button>`
+      : '';
+    return `
+    <tr onclick="openOwnerBkDetail('${b.id}')" style="cursor:pointer">
       <td style="white-space:nowrap">${b.fecha}</td>
       <td style="white-space:nowrap">${b.hora ? b.hora.slice(0,5) : '—'}</td>
       <td>
-        ${b.nombre}
+        ${b.nombre}${selBadge}
         ${b.comentario ? `<button onclick="event.stopPropagation();showComentario(this.dataset.c)" data-c="${b.comentario.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" style="margin-left:6px;background:#e8f4fb;border:none;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;color:#0e4159;vertical-align:middle">💬</button>` : ''}
       </td>
-      <td><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></td>
-      <td>${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
+      <td><a href="mailto:${b.email}" onclick="event.stopPropagation()" style="color:var(--accent)">${b.email}</a></td>
+      <td>${b.telefono ? `<a href="tel:${b.telefono}" onclick="event.stopPropagation()" style="color:var(--accent)">${b.telefono}</a>` : '—'}</td>
       <td style="text-align:center">${b.personas}</td>
       <td>${b.services ? b.services.nombre : '—'}</td>
       <td><span class="badge ${colors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></td>
-      <td style="white-space:nowrap">
-        <select onchange="ownerUpdateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px 6px;font-size:11px;white-space:nowrap">
-          <option value="">Cambiar…</option>
-          <option value="confirmada">Confirmar</option>
-          <option value="cancelada">Cancelar</option>
-        </select>
+      <td style="white-space:nowrap" onclick="event.stopPropagation()">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
+          ${btnReconfirmar}
+          <select onchange="ownerUpdateEstado('${b.id}',this.value)" style="border:1px solid var(--border);border-radius:5px;padding:4px 6px;font-size:11px;white-space:nowrap">
+            <option value="">Cambiar…</option>
+            <option value="confirmada">Confirmar</option>
+            <option value="reconfirmada">Reconfirmar</option>
+            <option value="cancelada">Cancelar</option>
+          </select>
+        </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 async function ownerUpdateEstado(id, estado) {
@@ -1398,6 +1442,96 @@ async function ownerUpdateEstado(id, estado) {
     await sbFetch('/bookings?id=eq.' + id, { method: 'PATCH', body: JSON.stringify({ estado }) });
     showToast('Estado actualizado ✓');
     await ownerLoadReservas();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function ownerReconfirmarReserva(id, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch('https://vmi3024621.contaboserver.net/webhook/reconfirmar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: id })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const bk = ownerBkData.find(b => b.id === id);
+      if (bk) bk.estado = 'reconfirmada';
+      renderOwnerBkTable();
+      showToast('Reserva reconfirmada ✓');
+    } else {
+      throw new Error(data.error || 'Error al reconfirmar');
+    }
+  } catch (e) {
+    showToast(e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Reconfirmar ✓';
+  }
+}
+
+// ── Owner booking detail / edit modal ──
+let currentOwnerBkDetail = null;
+
+function openOwnerBkDetail(id) {
+  const b = ownerBkData.find(x => x.id === id);
+  if (!b) return;
+  currentOwnerBkDetail = b;
+  let detail = b.selections_detail || {};
+  if (typeof detail === 'string') { try { detail = JSON.parse(detail); } catch { detail = {}; } }
+  const personas = b.personas || 1;
+  const colors = { confirmada:'badge-green', pendiente:'badge-amber', cancelada:'badge-gray' };
+
+  let selContent = '';
+  if (Object.keys(detail).length > 0) {
+    selContent = Array.from({ length: personas }, (_, i) => {
+      const p = i + 1;
+      const val = detail[p] || detail[String(p)] || '';
+      return `<div class="bk-sel-row"><span class="bk-sel-label">Persona ${p}</span><input type="text" class="bk-sel-input" data-person="${p}" value="${val.replace(/"/g,'&quot;')}" placeholder="—"></div>`;
+    }).join('');
+  } else {
+    // No selections stored — show empty inputs so owner can add phone-order notes
+    selContent = Array.from({ length: personas }, (_, i) => {
+      const p = i + 1;
+      return `<div class="bk-sel-row"><span class="bk-sel-label">Persona ${p}</span><input type="text" class="bk-sel-input" data-person="${p}" value="" placeholder="Sin opciones especiales"></div>`;
+    }).join('');
+  }
+
+  const lbl = txt => `<span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">${txt}</span>`;
+  document.getElementById('ownerBkDetailTitle').textContent = b.nombre;
+  document.getElementById('ownerBkDetailBody').innerHTML = `
+    <div style="color:var(--text-muted);font-size:13px;margin-bottom:18px">${b.fecha} · ${b.hora ? b.hora.slice(0,5) : '—'} · ${b.personas} persona${b.personas !== 1 ? 's' : ''} · <span class="badge ${colors[b.estado]||'badge-gray'}">${b.estado||'—'}</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:18px">
+      <div>${lbl('Email')}<div style="margin-top:3px;font-size:13px"><a href="mailto:${b.email}" style="color:var(--accent)">${b.email}</a></div></div>
+      <div>${lbl('Teléfono')}<div style="margin-top:3px;font-size:13px">${b.telefono ? `<a href="tel:${b.telefono}" style="color:var(--accent)">${b.telefono}</a>` : '—'}</div></div>
+      <div>${lbl('Servicio')}<div style="margin-top:3px;font-size:13px">${b.services ? b.services.nombre : '—'}</div></div>
+    </div>
+    ${b.comentario ? `<div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:13px"><strong>Nota:</strong> ${b.comentario}</div>` : ''}
+    <div style="border-top:1px solid var(--border);padding-top:16px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--primary);margin-bottom:10px">🍽 Selección de menú / variantes</div>
+      <div class="bk-sel-grid" id="ownerBkSelGrid">${selContent}</div>
+    </div>`;
+  document.getElementById('ownerBkDetailModal').classList.add('open');
+}
+
+async function saveOwnerBkDetail() {
+  if (!currentOwnerBkDetail) return;
+  const b = currentOwnerBkDetail;
+  const obj = {};
+  document.querySelectorAll('#ownerBkSelGrid .bk-sel-input').forEach(inp => {
+    if (inp.value.trim()) obj[inp.dataset.person] = inp.value.trim();
+  });
+  const newDetail = Object.keys(obj).length > 0 ? obj : null;
+  try {
+    await sbFetch('/bookings?id=eq.' + b.id, { method: 'PATCH', body: JSON.stringify({ selections_detail: newDetail }) });
+    b.selections_detail = newDetail;
+    fetch('https://vmi3024621.contaboserver.net/webhook/actualizar-selecciones', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: b.id, service_id: b.service_id, email: b.email, fecha: b.fecha, selections_detail: newDetail })
+    }).catch(() => {});
+    showToast('Selecciones guardadas ✓');
+    closeModal('ownerBkDetailModal');
+    renderOwnerBkTable();
   } catch (e) { showToast(e.message, 'error'); }
 }
 

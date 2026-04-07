@@ -23,6 +23,8 @@
     color_secondary: '#f6f3f1',
     logo_url: '',
     splitOccupancy: false,  // true → selectores separados Adultos / Niños
+    selectable_options: [], // [{ id, name, price }] — opciones de menú/variante por persona
+    timezone: 'Europe/Madrid', // zona horaria del hotel (IANA)
   };
 
   /* ─── Fuente Inter vía Google Fonts ──────────────────────────────── */
@@ -393,6 +395,37 @@
       margin-left: 4px;
     }
 
+    /* ── Opciones de menú / variante ── */
+    .hr-options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .hr-option-person { border: 1px solid var(--hr-border); border-radius: 10px; overflow: hidden; }
+    .hr-option-person-label {
+      background: var(--hr-secondary);
+      padding: 9px 14px;
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--hr-primary);
+      border-bottom: 1px solid var(--hr-border);
+    }
+    .hr-option-choice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      cursor: pointer;
+      border-top: 1px solid var(--hr-border);
+      font-size: .875rem;
+      color: var(--hr-text);
+      transition: background .12s;
+      user-select: none;
+    }
+    .hr-option-choice:first-child { border-top: none; }
+    .hr-option-choice:hover { background: var(--hr-secondary); }
+    .hr-option-choice.selected { background: var(--hr-primary); color: #fff; }
+    .hr-option-choice.selected .hr-option-price { color: rgba(255,255,255,.65); }
+    .hr-option-price { font-size: .78rem; color: var(--hr-muted); font-weight: 500; }
+
     /* ── Responsive ── */
     @media (max-width: 500px) {
       .hr-widget {
@@ -425,6 +458,8 @@
       personas: 1,
       adultos: 1,
       ninos: 0,
+      showSelections: false,   // sub-paso de selección de menú/variante
+      selections_detail: {},   // { "1": "Menú Degustación", "2": "Menú Vegano", ... }
     };
   }
   let state = freshState();
@@ -470,7 +505,7 @@
     return `${d}/${m}/${y}`;
   }
   function formatHora(h) { return h ? h.slice(0, 5) : ''; }
-  function minDate() { return new Date().toISOString().split('T')[0]; }
+  function minDate() { return new Date().toLocaleDateString('en-CA', { timeZone: config.timezone || 'Europe/Madrid' }); }
   function serviceMeta() {
     const parts = [];
     if (config.duracion) parts.push(config.duracion + ' min');
@@ -492,17 +527,23 @@
   }
 
   function buildHTML() {
-    const stepDots = [1, 2, 3, 4]
-      .map(n => `<div class="hr-step-dot ${state.step >= n ? 'active' : ''}"></div>`)
+    const hasOptions = config.selectable_options && config.selectable_options.length > 0;
+    const totalDots  = hasOptions ? 5 : 4;
+    const dotActive  = hasOptions
+      ? (state.step === 4 ? 5 : state.step === 3 && state.showSelections ? 4 : state.step)
+      : state.step;
+    const stepDots = Array.from({ length: totalDots }, (_, i) => i + 1)
+      .map(n => `<div class="hr-step-dot ${dotActive >= n ? 'active' : ''}"></div>`)
       .join('');
 
     const meta = serviceMeta();
-    const headerText = {
-      1: { title: config.nombre || 'Reservas', sub: meta || 'Selecciona una fecha' },
-      2: { title: 'Elige tu hora', sub: formatFecha(state.fecha) },
-      3: { title: 'Tus datos', sub: `${formatFecha(state.fecha)} · ${formatHora(state.hora)}` },
-      4: { title: '¡Reserva confirmada!', sub: `${config.establishment_nombre || config.nombre} — Te esperamos` },
-    }[state.step];
+    const headerText = (() => {
+      if (state.step === 1) return { title: config.nombre || 'Reservas', sub: meta || 'Selecciona una fecha' };
+      if (state.step === 2) return { title: 'Elige tu hora', sub: formatFecha(state.fecha) };
+      if (state.step === 3 && state.showSelections) return { title: 'Elige tu menú', sub: `${formatFecha(state.fecha)} · ${formatHora(state.hora)} · ${state.personas} persona${state.personas !== 1 ? 's' : ''}` };
+      if (state.step === 3) return { title: 'Tus datos', sub: `${formatFecha(state.fecha)} · ${formatHora(state.hora)}` };
+      return { title: '¡Reserva confirmada!', sub: `${config.establishment_nombre || config.nombre} — Te esperamos` };
+    })();
 
     const logoSrc = config.foto_url || config.logo_url || '';
     const logoHtml = logoSrc
@@ -530,6 +571,7 @@
   }
 
   function buildStep() {
+    if (state.step === 3 && state.showSelections) return buildSelectionsStep();
     switch (state.step) {
       case 1: return buildStep1();
       case 2: return buildStep2();
@@ -642,6 +684,38 @@
       <button class="hr-btn" id="hr-btn-step3" ${state.loading ? 'disabled' : ''}>
         ${state.loading
           ? `<span class="hr-spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></span>Confirmando…`
+          : (config.selectable_options && config.selectable_options.length > 0 ? 'Elegir menú →' : 'Confirmar reserva')}
+      </button>
+    `;
+  }
+
+  function buildSelectionsStep() {
+    const opts = config.selectable_options;
+    const rows = Array.from({ length: state.personas }, (_, i) => {
+      const pNum = i + 1;
+      const selected = state.selections_detail[pNum] || null;
+      const choices = opts.map(o => `
+        <div class="hr-option-choice ${selected === o.name ? 'selected' : ''}"
+             data-person="${pNum}" data-option="${o.name}">
+          <span>${o.name}</span>
+          ${o.price != null ? `<span class="hr-option-price">${Number(o.price).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 })}</span>` : ''}
+        </div>`).join('');
+      return `
+        <div class="hr-option-person">
+          <div class="hr-option-person-label">Persona ${pNum}</div>
+          <div class="hr-option-choices">${choices}</div>
+        </div>`;
+    }).join('');
+
+    const allSelected = Array.from({ length: state.personas }, (_, i) => state.selections_detail[i + 1]).every(Boolean);
+
+    return `
+      <button class="hr-btn-back" id="hr-btn-back-sel">← Volver a mis datos</button>
+      <p style="font-size:.8rem;color:var(--hr-muted);margin-bottom:14px;line-height:1.5">Selecciona una opción para cada persona.</p>
+      <div class="hr-options-grid">${rows}</div>
+      <button class="hr-btn" id="hr-btn-confirm-sel" ${state.loading || !allSelected ? 'disabled' : ''}>
+        ${state.loading
+          ? `<span class="hr-spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></span>Confirmando…`
           : 'Confirmar reserva'}
       </button>
     `;
@@ -666,6 +740,11 @@
           <div class="hr-resumen-row"><span>Nombre</span><span>${state.nombre}</span></div>
           ${state.telefono ? `<div class="hr-resumen-row"><span>Teléfono</span><span>${state.telefono}</span></div>` : ''}
           ${state.comentario ? `<div class="hr-resumen-row"><span>Comentario</span><span>${state.comentario}</span></div>` : ''}
+          ${Object.keys(state.selections_detail).length > 0
+            ? Object.entries(state.selections_detail).map(([p, opt]) =>
+                `<div class="hr-resumen-row"><span>Persona ${p}</span><span>${opt}</span></div>`
+              ).join('')
+            : ''}
         </div>
         <button class="hr-nueva-reserva" id="hr-nueva-reserva">Hacer otra reserva</button>
       </div>
@@ -716,7 +795,22 @@
     if (btnBack3) btnBack3.addEventListener('click', () => { state.step = 2; state.error = null; render(); });
 
     const btnStep3 = container.querySelector('#hr-btn-step3');
-    if (btnStep3) btnStep3.addEventListener('click', submitReserva);
+    if (btnStep3) btnStep3.addEventListener('click', handleStep3Submit);
+
+    const btnBackSel = container.querySelector('#hr-btn-back-sel');
+    if (btnBackSel) btnBackSel.addEventListener('click', () => { state.showSelections = false; state.error = null; render(); });
+
+    container.querySelectorAll('.hr-option-choice').forEach(card => {
+      card.addEventListener('click', () => {
+        const person = parseInt(card.dataset.person, 10);
+        const option = card.dataset.option;
+        state.selections_detail[person] = option;
+        render();
+      });
+    });
+
+    const btnConfirmSel = container.querySelector('#hr-btn-confirm-sel');
+    if (btnConfirmSel) btnConfirmSel.addEventListener('click', sendReserva);
 
     const btnNueva = container.querySelector('#hr-nueva-reserva');
     if (btnNueva) btnNueva.addEventListener('click', () => { state = freshState(); render(); });
@@ -740,7 +834,8 @@
     render();
   }
 
-  async function submitReserva() {
+  // Step 3 submit: validate form fields, then either show selections sub-step or post directly
+  async function handleStep3Submit() {
     const nombre      = container.querySelector('#hr-nombre').value.trim();
     const email       = container.querySelector('#hr-email').value.trim();
     const telefono    = container.querySelector('#hr-telefono').value.trim();
@@ -768,21 +863,44 @@
       personas = parseInt(container.querySelector('#hr-personas').value, 10);
     }
 
-    state.nombre      = nombre;
-    state.email       = email;
-    state.telefono    = telefono;
-    state.comentario  = comentario;
-    state.personas    = personas;
+    state.nombre     = nombre;
+    state.email      = email;
+    state.telefono   = telefono;
+    state.comentario = comentario;
+    state.personas   = personas;
     if (config.splitOccupancy) { state.adultos = adultos; state.ninos = ninos; }
-    state.loading   = true;
-    state.error     = null;
+    state.error      = null;
+
+    // If service has selectable options, show the sub-step before posting
+    if (config.selectable_options && config.selectable_options.length > 0) {
+      state.showSelections = true;
+      state.selections_detail = {};
+      render();
+      return;
+    }
+
+    await sendReserva();
+  }
+
+  // Final POST — called either directly from step 3 (no options) or from the selections sub-step
+  async function sendReserva() {
+    state.loading = true;
+    state.error   = null;
     render();
 
     try {
-      const payload = { nombre, email, telefono, comentario, fecha: state.fecha, hora: state.hora, personas };
-      if (config.splitOccupancy) { payload.adultos = adultos; payload.ninos = ninos; }
+      const payload = {
+        nombre: state.nombre, email: state.email, telefono: state.telefono,
+        comentario: state.comentario, fecha: state.fecha, hora: state.hora, personas: state.personas,
+      };
+      if (config.splitOccupancy) { payload.adultos = state.adultos; payload.ninos = state.ninos; }
+      if (Object.keys(state.selections_detail).length > 0) {
+        payload.selections_detail = state.selections_detail;
+        console.log('[Widget] Enviando selecciones:', JSON.stringify(payload.selections_detail));
+      }
       await postReserva(payload);
-      state.step = 4;
+      state.step           = 4;
+      state.showSelections = false;
     } catch (e) {
       state.error = e.message;
     }
@@ -848,6 +966,8 @@
       config.logo_url            = (cfg.config && cfg.config.logo_url) || '';
       config.foto_url            = cfg.foto_url || '';
       config.splitOccupancy      = cfg.split_occupancy === true || (cfg.config && cfg.config.split_occupancy === true) || false;
+      config.selectable_options  = Array.isArray(cfg.selectable_options) ? cfg.selectable_options : [];
+      config.timezone            = cfg.timezone || (cfg.config && cfg.config.timezone) || 'Europe/Madrid';
     } catch (e) {
       container.innerHTML = `<div class="hr-init-error">No se pudo cargar el widget.<br><small>${e.message}</small></div>`;
       return;
